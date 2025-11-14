@@ -1,14 +1,16 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2
 EXEC = projet
+SRC = main.c Processus.c
+OBJ = $(SRC:.c=.o)
 
 all: $(EXEC) clean
 
-$(EXEC): main.o
+$(EXEC): $(OBJ)
 	$(CC) -o $@ $^
 
-main.o: main.c
-	$(CC) $(CFLAGS) -c $< -o $@
+%.o: %.c Processus.h
+	$(CC) $(CFLAGS) -c $<
 
 clean:
 	rm -f *.o
