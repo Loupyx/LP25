@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include "Processus.h"
 
-int main(void){
+int main(){
     printf("Hello World !\n");
     return 0;
 }
