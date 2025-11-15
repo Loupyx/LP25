@@ -29,7 +29,7 @@ Proc* create_proc(){
         printf("new_proc\n");
         return NULL;
     }
-    new_proc->cmdline = (char*)malloc(SIZE_CHAR*sizeof(char));
+    new_proc->cmdline = (char*)calloc(SIZE_CHAR,sizeof(char));
     if(!new_proc->cmdline){
         printf("cmdline\n");
         return NULL;
@@ -75,7 +75,7 @@ int Get_processus(Proc **lproc){
             //récupére PID/PPID/name/state
             sprintf(path, "/proc/%s/stat", entry->d_name);
             fichier = fopen(path, "r");
-            while (fscanf(fichier, "%99s", word) == 1) {
+            while (fscanf(fichier, "%127s", word) == 1) {
                 cpt_word++;
                 switch (cpt_word)
                 {
