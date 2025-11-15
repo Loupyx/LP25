@@ -2,6 +2,12 @@
 #include "Processus.h"
 
 int main(){
-    printf("Hello World !\n");
-    return 0;
+    Proc *lproc = NULL;
+    int res = Get_processus(&lproc);
+    Proc *temp = lproc;
+    while(temp != NULL){
+        print_proc(temp);
+        temp = temp->next;
+    }
+    return res;
 }
