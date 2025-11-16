@@ -5,6 +5,7 @@
 #include <string.h>
 #include <pwd.h>
 #include "Processus.h"
+#include <unistd.h>
 
 #define SIZE_CHAR 300
 
@@ -17,7 +18,7 @@ int is_number(const char *s) {
 
 void print_proc(Proc *p){
     printf(
-        "------------------------------------\nPID : %d\nPPID : %d\nUser : %s\nName : %s\nState : %c\nCPU : %.3f\nTIME : %ld\n",
+        "------------------------------------\nPID : %d\nPPID : %d\nUser : %s\nName : %s\nState : %c\nCPU : %.3f\nTIME : %f\n",
         p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU, p->time);
 
 }
@@ -54,6 +55,7 @@ int Get_processus(Proc **lproc){
             char path[SIZE_CHAR],word[SIZE_CHAR], temp[SIZE_CHAR];
             int cpt_word = 0;
             FILE *fichier = NULL;
+            long int utime = 0, stime = 0;
             Proc *new_proc = create_proc();
             if(!new_proc){
                 return EXIT_FAILURE;
@@ -72,7 +74,7 @@ int Get_processus(Proc **lproc){
             fclose(fichier);
             //fin
 
-            //récupére PID/PPID/name/state
+            //récupére PID/PPID/name/state/time CPU
             sprintf(path, "/proc/%s/stat", entry->d_name);
             fichier = fopen(path, "r");
             while (fscanf(fichier, "%127s", word) == 1) {
@@ -96,12 +98,24 @@ int Get_processus(Proc **lproc){
                 case 4:
                     new_proc->PPID = atoi(word);
                     break;
+
+                case 14:
+                    utime = atol(word);
+                    break;
+
+                case 15:
+                    stime = atol(word);
+                    break;
                 
                 default:
                     break;
                 }
             }
             fclose(fichier);
+            long int time = utime+stime;
+            long ticks_per_sec = sysconf(_SC_CLK_TCK);
+            double sec = (double)time/(double)ticks_per_sec;
+            new_proc->time = sec;
             //fin
 
             //récupére user

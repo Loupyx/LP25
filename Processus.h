@@ -8,7 +8,7 @@ typedef struct proc{
     char *cmdline;
     char state;
     float CPU;
-    long int time;
+    double time;
     struct proc *next;
 }Proc;
 
