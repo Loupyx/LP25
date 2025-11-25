@@ -4,11 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/*definition de l'etat du programme*/
-typedef struct {
-    int is_running;
-    char last_key_pressed[128];
-} programme_state;
+#include "key_detector.h"
 
 /*initilisation de ncurses
 WINDOW* est un pointeur vers la fenetre principale (stdscr)*/
@@ -90,28 +86,4 @@ void handle_input(programme_state *state){
         strncpy(state->last_key_pressed, key_name,sizeof(state->last_key_pressed) - 1);
         state->last_key_pressed[sizeof(state->last_key_pressed) - 1] = '\0';
     }
-}
-
-/*fonction main */
-int main(){
-    WINDOW *main_work;
-    programme_state state = {.is_running = 1};
-
-    //initialisation
-    strcpy(state.last_key_pressed, "aucune");
-    main_work = initialize_ncurses();
-    if (main_work ==NULL){
-        return 1;
-    }
-
-    //boucle principale 
-    while (state.is_running){
-        handle_input(&state);   //lit et traite l'entrée 
-        draw_ui(main_work, &state);     //dessine l'inteface 
-        usleep(50000);      //50 millisecondes pour limiter l'utilisation du CPU
-    }
-    //nettoyage et restauration du terminal 
-    endwin();
-    printf("test clavier termine\n");
-    return 0;
 }
