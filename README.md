@@ -7,8 +7,14 @@ le projet consiste à concevoir un programme de gestion de processus pour systè
 
 
 ## Dépendance du projet
-Ce projet dépend de bibliothèque tel que
+Ce projet dépend de plusieurs bibliothèques :
 - Ncurses
+- libssh
 
-Pour les installer faites :\
-```sudo apt install libncurses5-dev libncursesw5-dev```
+Pour les installer sur Ubuntu faites :\
+```sudo apt install libncurses5-dev libncursesw5-dev libssh-dev```
+
+## Configuration
+Une fois toutes les dépendances installez faites\
+```cp .config.example .config```\
+Puis remplissez le fichier comme indiqué.
