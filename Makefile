@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -O2
 LDLIBS = -lncurses	
 EXEC = projet
-SRC = main.c Processus.c key_detector.c
+SRC := $(wildcard *.c)
 OBJ = $(SRC:.c=.o)
 
 all: $(EXEC) clean
