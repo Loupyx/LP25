@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -O2
 LDLIBS = -lncurses	
 EXEC = projet
-SRC := $(wildcard *.c)
+SRC := $(wildcard *.c */*.c)
 OBJ = $(SRC:.c=.o)
 
 all: $(EXEC) clean
@@ -10,8 +10,8 @@ all: $(EXEC) clean
 $(EXEC): $(OBJ)
 	$(CC) -o $@ $^ $(LDLIBS)
 
-%.o: %.c Processus.h
-	$(CC) $(CFLAGS) -c $<
+%.o: %.c %.h
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o
+	rm -f *.o */*.o
