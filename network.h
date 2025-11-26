@@ -1,28 +1,48 @@
 #ifndef NETWORK_H
 #define NETWORK_H
+#include <libssh/libssh.h>
+#include <libssh/sftp.h>
 
-enum error_network {
-    CONTINUE,
-    CANT_OPEN_FILE,
-    CANT_ALLOC_SERV,
-    CANT_ALLOC_WORD,
-    SERVER_SKIPED, //tourne toujours mais avertie le user
+/**
+ * Codes d'erreur possibles lors du parsing de la configuration serveur.
+ */
+enum error_parsing {
+    CONTINUE,        /**< Aucune erreur bloquante, le parsing peut continuer. */
+    CANT_OPEN_FILE,  /**< Impossible d'ouvrir le fichier de configuration. */
+    CANT_ALLOC_SERV, /**< Échec d'allocation mémoire pour un serveur. */
+    CANT_ALLOC_WORD, /**< Échec d'allocation mémoire pour un mot/chaîne lue. */
+    SERVER_SKIPED,   /**< Serveur ignoré, le programme continue mais avertit l'utilisateur. */
 };
 
+/**
+ * Représente un serveur distant et ses paramètres de connexion.
+ */
 typedef struct {
-    char *name;
-    char *adresse;
-    char *port;
-    char *username;
-    char *password;
-    char *connexion_type;
-}server;
+    char *name;            /**< Nom du serveur. */
+    char *adresse;         /**< Adresse du serveur (IP ou nom de domaine). */
+    int   port;            /**< Port utilisé pour la connexion. */
+    char *username;        /**< Nom d'utilisateur pour l'authentification. */
+    char *password;        /**< Mot de passe pour l'authentification. */
+    char *connexion_type;  /**< Type de connexion (par ex. TCP, UDP, SSH...). */
+} server;
 
+/**
+ * Élément d'une liste chaînée de serveurs.
+ *
+ * Chaque maillon contient un pointeur vers un serveur et un pointeur
+ * vers le maillon suivant de la liste.
+ */
 typedef struct maillon_s {
-    server *serv;
-    struct maillon_s *next;
-}maillon;
+    server *serv;            /**< Serveur stocké dans ce maillon. */
+    struct maillon_s *next;  /**< Pointeur vers le maillon suivant. */
+} maillon;
 
+/**
+ * Liste chaînée de serveurs.
+ *
+ * Représentée par un pointeur vers le premier maillon de la liste,
+ * ou NULL si la liste est vide.
+ */
 typedef maillon *list_serv;
 
 /**
@@ -32,7 +52,7 @@ typedef maillon *list_serv;
  * \param error Code d'erreur retourné (0 si succès, autre valeur si erreur).
  * \return La liste de serveurs lue dans le fichier.
  */
-list_serv get_serveur_Config(char *path, int *error);
+list_serv get_serveur_config(char *path, int *error);
 
 /**
  * Affiche un message d'erreur formaté sur la sortie appropriée.
@@ -54,5 +74,35 @@ void print_list_serv(list_serv l);
  * \param serv Pointeur vers la structure Server à détruire.
  */
 void destroy_server(server *serv);
+
+/**
+ * Représente l'état d'une session SSH/SFTP.
+ *
+ * Contient les objets nécessaires pour gérer une connexion SSH et SFTP
+ * associée, ainsi que le code de retour des opérations.
+ */
+typedef struct {
+    ssh_session     session;  /**< Session SSH associée au serveur. */
+    sftp_session    sftp;     /**< Session SFTP associée à la session SSH. */
+    sftp_dir        dir;      /**< Répertoire SFTP courant ouvert. */
+    sftp_attributes attr;     /**< Attributs du fichier ou répertoire courant. */
+    int             rc;       /**< Code de retour des dernières opérations. */
+} ssh_state;
+
+/**
+ * Initialise une ou plusieurs sessions SSH/SFTP pour un serveur donné.
+ *
+ * \param serv  Serveur pour lequel établir la (les) session(s) SSH/SFTP.
+ * \return Un tableau de pointeurs sur des structures ssh_state initialisées,
+ *         ou NULL en cas d'erreur.
+ */
+ssh_state **init_ssh_session(server *serv);
+
+/**
+ * Libère les ressources associées à un état de session SSH/SFTP.
+ *
+ * \param s Pointeur vers la structure ssh_state à détruire.
+ */
+void destroy_ssh_state(ssh_state *s);
 
 #endif

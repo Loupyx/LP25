@@ -18,3 +18,13 @@ Pour les installer sur Ubuntu faites :\
 Une fois toutes les dépendances installez faites\
 ```cp .config.example .config```\
 Puis remplissez le fichier comme indiqué.
+
+## Créer un serveur SSH
+Pour créer un serveur SSH, il faut installer "openssh-server" avec la commande\
+```sudo apt install openssh-server```\
+Ensuite vous pouvez démarrer le serveur :\
+```sudo systemctl start ssh && sudo systemctl enable ssh```\
+Vérifier ensuite que le serveur est bien démarrer :\
+```sudo systemctl status ssh```\
+Regarder bien que la ligne "Active" est la valeur : "active (running)". Le fichier de configuration du serveur est dans ```/etc/ssh/sshd_config```. Si vous voulez relancer le serveur (après avoir modifier la configuration du serveur) faites :\
+```sudo systemctl restart ssh```

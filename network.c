@@ -6,7 +6,9 @@
 #include "network.h"
 
 #define CHAR_SIZE 256
+#define NB_CHAMP 6
 
+//parsing du fichier config
 list_serv add_queue(list_serv list, server *serv) {
     maillon *new = (maillon*)malloc(sizeof(maillon));
     if (!new) {
@@ -30,7 +32,7 @@ list_serv add_queue(list_serv list, server *serv) {
     return list;
 }
 
-list_serv get_serveur_Config(char *path, int *error) {
+list_serv get_serveur_config(char *path, int *error) {
     FILE *file = NULL;
     list_serv list = NULL;
     server *new = NULL;
@@ -90,8 +92,7 @@ list_serv get_serveur_Config(char *path, int *error) {
                         strcpy(new->adresse, word);
                         break;
                     case 3:
-                        new->port = (char*)malloc(size + 1);
-                        strcpy(new->port, word);
+                        new->port = atoi(word);
                         break;
                     case 4:
                         new->username = (char*)malloc(size + 1);
@@ -114,7 +115,7 @@ list_serv get_serveur_Config(char *path, int *error) {
             }
         }
 
-        if (cpt_word != 6) {
+        if (cpt_word != NB_CHAMP) {
             destroy_server(new);
             printf("ligne invalide, champs lus = %d\n", cpt_word);
             *error = SERVER_SKIPED;
@@ -145,7 +146,7 @@ void print_list_serv(list_serv l) {
         printf("Serveur %d:\n", i);
         printf("  name           : %s\n", s->name);
         printf("  adresse        : %s\n", s->adresse);
-        printf("  port           : %s\n", s->port);
+        printf("  port           : %d\n", s->port);
         printf("  username       : %s\n", s->username);
         printf("  password       : %s\n", s->password);
         printf("  connexion_type : %s\n", s->connexion_type);
@@ -160,10 +161,83 @@ void destroy_server(server *serv) {
     if (serv) {
         free(serv->name);
         free(serv->adresse);
-        free(serv->port);
         free(serv->username);
         free(serv->password);
         free(serv->connexion_type);
     }
     free(serv);
 }
+//fin parsing
+
+//SSH
+ssh_state **init_ssh_session(server *serv){
+
+    ssh_state *state = (ssh_state*)malloc(sizeof(ssh_state));
+    if(!state){
+        fprintf(stderr, "Erreur allocation ssh_state");
+        return NULL;
+    }
+    state->session = NULL;
+    state->sftp = NULL;
+    state->dir = NULL;
+    state->attr = NULL;
+
+    state->session = ssh_new(); //création nouvelle session
+    if (!state->session) {
+        fprintf(stderr, "Erreur: ssh_new\n");
+        return NULL;
+    }
+
+    ssh_options_set(state->session, SSH_OPTIONS_HOST, serv->adresse);
+    ssh_options_set(state->session, SSH_OPTIONS_USER, serv->username);
+    ssh_options_set(state->session, SSH_OPTIONS_PORT, &serv->port);
+
+    state->rc = ssh_connect(state->session); //connexion
+    if (state->rc != SSH_OK) {
+        fprintf(stderr, "Erreur de connexion: %s\n", ssh_get_error(state->session));
+        destroy_ssh_state(state);
+        return NULL;
+    }
+
+    state->rc = ssh_userauth_password(state->session, NULL, serv->password); //identification
+    if (state->rc != SSH_AUTH_SUCCESS) {
+        fprintf(stderr, "Erreur d'authentification: %s\n", ssh_get_error(state->session));
+        ssh_disconnect(state->session);
+        destroy_ssh_state(state);
+        return NULL;
+    }
+    destroy_ssh_state(state);
+
+    return NULL;
+
+}
+
+void destroy_ssh_state(ssh_state *s) {
+    if (!s) return;
+
+    if (s->attr) {
+        sftp_attributes_free(s->attr);
+        s->attr = NULL;
+    }
+
+    if (s->dir) {
+        int rc = sftp_closedir(s->dir);
+        if (rc != SSH_OK) {
+            fprintf(stderr, "sftp_closedir failed: %d\n", rc);
+        }
+        s->dir = NULL;
+    }
+
+    if (s->sftp) {
+        sftp_free(s->sftp);
+        s->sftp = NULL;
+    }
+
+    if (s->session) {
+        ssh_disconnect(s->session);
+        ssh_free(s->session);
+        s->session = NULL;
+    }
+    s->rc = 0;
+}
+//fin SSH
