@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "network.h"
+#include "network_SSH.h"
 
 #define CHAR_SIZE 256
 #define NB_CHAMP 6
@@ -15,12 +15,14 @@ list_serv add_queue(list_serv list, server *serv) {
         return NULL;
     }
     new->next = NULL;
+    new->prev = NULL;
     new->serv = serv;
     if (!list) {
         return new;
     }
     if (!list->next) {
         list->next = new;
+        new->prev = list;
         return list;
     }
 
@@ -29,6 +31,7 @@ list_serv add_queue(list_serv list, server *serv) {
         temp = temp->next;
     }
     temp->next = new;
+    new->prev = temp;
     return list;
 }
 

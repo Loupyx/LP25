@@ -3,8 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "key_detector.h"
-#include "network.h"
+#include "ui/key_detector.h"
+#include "network/network_SSH.h"
+#include "process/Processus.h"
 
 
 
@@ -22,14 +23,14 @@ int main(){
     }
 
     if ((error != CONTINUE && error != SERVER_SKIPED) || l == NULL) {
-        fprintf(stderr, "Erreur Get_serveur_Config: %d\n", error);
+        fprintf(stderr, "Erreur get_serveur_config: %d\n", error);
         return 1;
     }
 
     open_dir_ssh(state);
     close_dir_ssh(state);
 
-    //print_list_serv(l);
+    print_list_serv(l);
     destroy_ssh_state(state);
 
     return error;

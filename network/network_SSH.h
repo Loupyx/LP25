@@ -1,5 +1,5 @@
-#ifndef NETWORK_H
-#define NETWORK_H
+#ifndef NETWORK_SSH_H
+#define NETWORK_SSH_H
 #include <libssh/libssh.h>
 #include <libssh/sftp.h>
 
@@ -35,6 +35,7 @@ typedef struct {
 typedef struct maillon_s {
     server *serv;            /**< Serveur stocké dans ce maillon. */
     struct maillon_s *next;  /**< Pointeur vers le maillon suivant. */
+    struct maillon_s *prev; /**< Pointuer vers le maillon précedent */
 } maillon;
 
 /**
@@ -90,9 +91,9 @@ typedef struct {
 } ssh_state;
 
 /**
- * Initialise une ou plusieurs sessions SSH/SFTP pour un serveur donné.
+ * Initialise une session SSH/SFTP pour un serveur donné.
  *
- * \param serv  Serveur pour lequel établir la (les) session(s) SSH/SFTP.
+ * \param serv  Serveur pour lequel établir la session SSH/SFTP.
  * \return Un tableau de pointeurs sur des structures ssh_state initialisées,
  *         ou NULL en cas d'erreur.
  */

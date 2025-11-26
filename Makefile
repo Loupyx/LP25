@@ -10,7 +10,8 @@ all: $(EXEC) clean
 $(EXEC): $(OBJ)
 	$(CC) -o $@ $^ $(LDLIBS)
 
-%.o: %.c %.h
+%.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
+	
 clean:
 	rm -f *.o */*.o
