@@ -34,17 +34,17 @@ Proc* create_proc(){
     //initialisation d'un nouveau processus
     Proc *new_proc = (Proc*)calloc(1, sizeof(Proc));
     if(!new_proc){
-        printf("new_proc\n");
+        fprintf(stderr, "new_proc\n");
         return NULL;
     }
     new_proc->cmdline = (char*)calloc(SIZE_CHAR,sizeof(char));
     if(!new_proc->cmdline){
-        printf("cmdline\n");
+        fprintf(stderr, "cmdline\n");
         return NULL;
     }
     new_proc->user = (char*)malloc(SIZE_CHAR*sizeof(char));
     if(!new_proc->user){
-        printf("user\n");
+        fprintf(stderr, "user\n");
         return NULL;
     }
     new_proc->next = NULL;
