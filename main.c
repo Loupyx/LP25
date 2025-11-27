@@ -7,15 +7,12 @@
 #include "ui/key_detector.h"
 #include "network/network_SSH.h"
 #include "process/Processus.h"
+#include "tool/tool.h"
 
 /*fonction main */
-int main(){
-    Proc *lproc = NULL;
-    int res = Get_processus(&lproc);
-    Proc *temp = lproc;
-    while(temp != NULL){
-        print_CPU(temp);
-        temp = temp->next;
-    }
-    return res;
+int main() {
+
+    char *test = get_char_file("/proc/95/stat");
+    printf("%s\n", test);
+    return 0;
 }
