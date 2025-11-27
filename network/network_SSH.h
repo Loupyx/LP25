@@ -10,7 +10,7 @@ enum error_parsing {
     CONTINUE,        /**< Aucune erreur bloquante, le parsing peut continuer. */
     CANT_OPEN_FILE,  /**< Impossible d'ouvrir le fichier de configuration. */
     CANT_ALLOC_SERV, /**< Échec d'allocation mémoire pour un serveur. */
-    CANT_ALLOC_WORD, /**< Échec d'allocation mémoire pour un mot/chaîne lue. */
+    CANT_ALLOC_WORD, /**< Échec d'allocation mémoire pour un mot/chaîne lu. */
     SERVER_SKIPED,   /**< Serveur ignoré, le programme continue mais avertit l'utilisateur. */
 };
 
@@ -35,7 +35,7 @@ typedef struct {
 typedef struct maillon_s {
     server *serv;            /**< Serveur stocké dans ce maillon. */
     struct maillon_s *next;  /**< Pointeur vers le maillon suivant. */
-    struct maillon_s *prev; /**< Pointuer vers le maillon précedent */
+    struct maillon_s *prev; /**< Pointeur vers le maillon précédent */
 } maillon;
 
 /**
@@ -49,9 +49,9 @@ typedef maillon *list_serv;
 /**
  * Lit un fichier de configuration et construit la liste de serveurs.
  *
- * \param path Chemin vers le fichier de configuration.
+ * \param path c'est le chemin vers le fichier de configuration.
  * \param error Code d'erreur retourné (0 si succès, autre valeur si erreur).
- * \return La liste de serveurs lue dans le fichier.
+ * \return La liste de serveurs lu dans le fichier.
  */
 list_serv get_serveur_config(char *path, int *error);
 
@@ -65,14 +65,14 @@ void print_error(char mess[]);
 /**
  * Affiche le contenu d'une liste de serveurs.
  *
- * \param l Liste de serveurs à afficher.
+ * \param l Liste des serveurs à afficher.
  */
 void print_list_serv(list_serv l);
 
 /**
  * Libère toute la mémoire associée à un serveur.
  *
- * \param serv Pointeur vers la structure Server à détruire.
+ * \param serv Pointeur vers la structure Server à supprimer.
  */
 void destroy_server(server *serv);
 
@@ -80,7 +80,7 @@ void destroy_server(server *serv);
  * Représente l'état d'une session SSH/SFTP.
  *
  * Contient les objets nécessaires pour gérer une connexion SSH et SFTP
- * associée, ainsi que le code de retour des opérations.
+ * associée mais aussi le code de retour des opérations.
  */
 typedef struct {
     ssh_session     session;  /**< Session SSH associée au serveur. */

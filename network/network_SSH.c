@@ -9,9 +9,9 @@
 #define NB_CHAMP 6
 
 //parsing du fichier config
-list_serv add_queue(list_serv list, server *serv) {
+list_serv add_queue(list_serv list, server *serv) {     //fonction pour ajouter un serveur à la fin de liste
     maillon *new = (maillon*)malloc(sizeof(maillon));
-    if (!new) {
+    if (!new) { 
         return NULL;
     }
     new->next = NULL;
