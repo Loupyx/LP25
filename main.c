@@ -11,8 +11,11 @@
 
 /*fonction main */
 int main() {
+    int error;
+    list_serv l = get_serveur_config("", &error);
+    ssh_state *state = init_ssh_session(l->serv);
 
-    char *test = get_char_file("/proc/95/stat");
+    char *test = get_char_ssh(state, "/proc/95/stat");
     printf("%s\n", test);
     return 0;
 }
