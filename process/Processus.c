@@ -25,7 +25,7 @@ void print_proc(Proc *p){
 
 }
 
-void print_CPU(Proc *p){
+void print_cpu(Proc *p){
     printf("CPU : %.3f\n", p->CPU);
 
 }
@@ -51,7 +51,7 @@ Proc* create_proc(){
     return new_proc;
 }
 
-int Get_processus(Proc **lproc){
+int get_processus(Proc **lproc){
     struct dirent *entry;
     DIR *dir = opendir("/proc");
     if(!dir){
