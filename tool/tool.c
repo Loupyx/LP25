@@ -1,13 +1,17 @@
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <libssh/libssh.h>
 #include <libssh/sftp.h>
 #include <fcntl.h>
+#include <dirent.h>
+#include <ctype.h>
 
 #include "./../network/network_SSH.h"
 #include "tool.h"
 
+//LOCAL
 char *get_char_file(char *path) {
     if(!path){
         return NULL;
@@ -45,6 +49,43 @@ char *get_char_file(char *path) {
     return text;
 }
 
+char **get_list_dirs(const char *path){
+    DIR *dir;
+    struct dirent *entry;
+    char **names = NULL;
+    int size, nb_dir = 0;
+    dir = opendir(path);
+    if (!dir) {
+        fprintf(stderr, "opendir");
+        return NULL;
+    }
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+            continue;
+
+        if (entry->d_type == DT_DIR && is_number(entry->d_name) == 1) {
+            size = strlen(entry->d_name);
+            char *word = malloc(size + 1);
+            if (!word) {
+                return NULL;
+            }
+            strcpy(word, entry->d_name);
+            char **tmp = realloc(names, (nb_dir + 2) * sizeof *names);/* +2 : un pour le nouveau nom, un pour le pointeur NULL final */
+            if (!tmp) {
+                free(word);
+                return NULL;
+            }
+            names = tmp;
+            names[nb_dir++] = word;
+            names[nb_dir] = NULL;
+        }
+    }
+    printf("oui\n");
+    return names;
+
+}
+
+//SSH
 char *get_char_ssh(ssh_state *state, char *path){
     if (!path) {
         fprintf(stderr, "get_char_ssh : path\n");
@@ -100,10 +141,12 @@ char *get_char_ssh(ssh_state *state, char *path){
 
 }
 
+//TELNET
 char *get_char_telnet(){
     return "à faire";
 }
 
+//AUTRE
 char **split(char *line, char delim) {
     if (!line) {
         return NULL;
@@ -137,6 +180,15 @@ char **split(char *line, char delim) {
         }
     }
     return res;
+}
+
+int is_number(const char *s) {
+    for (size_t i = 0; s[i]; i++){
+        if (!isdigit((unsigned char)s[i])){
+            return 0;
+        }
+    }
+    return 1;
 }
 
 void print_str_array(char **tab) {
