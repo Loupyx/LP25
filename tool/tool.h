@@ -15,6 +15,15 @@
 char *get_char_file(char *path);
 
 /**
+ * Récupère la liste des sous-répertoires d'un chemin donné.
+ *
+ * \param path Chemin du répertoire à explorer.
+ * \return Tableau de chaînes (terminé par NULL) contenant les noms des
+ *         sous-répertoires, ou NULL en cas d'erreur.
+ */
+char **get_list_dirs(const char *path);
+
+/**
  * Lit le contenu d'un fichier distant via une session SSH/SFTP.
  *
  * Utilise l'état SSH fourni pour accéder au fichier distant et renvoie
@@ -41,6 +50,14 @@ char *get_char_telnet();
  * \return Tableau de chaînes (char **), terminé par NULL, ou NULL en cas d'erreur.
  */
 char **split(char *line, char delim);
+
+/**
+ * Vérifie si une chaîne représente un nombre entier valide.
+ *
+ * \param s Chaîne à analyser.
+ * \return 1 si la chaîne représente un nombre, 0 sinon.
+ */
+int is_number(const char *s);
 
 /**
  * Affiche un tableau de chaînes de caractères.
