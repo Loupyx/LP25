@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <libssh/libssh.h>
 #include <libssh/sftp.h>
 #include <fcntl.h>
@@ -97,4 +98,52 @@ char *get_char_ssh(ssh_state *state, char *path){
     ssh_channel_free(chan);
     return text;
 
+}
+
+char *get_char_telnet(){
+    return "à faire";
+}
+
+char **split(char *line, char delim) {
+    if (!line) {
+        return NULL;
+    }
+    int n = strlen(line);
+    char **res = NULL;
+    int nb_word = 0;
+    int start = 0;
+    
+    for (int i = 0; i <= n; ++i) {
+        if (line[i] == delim || line[i] == '\n' || line[i] == '\0') {
+            int size = i - start;
+            if (size > 0) {
+                char *word = malloc(size + 1);
+                if (!word) {
+                    return NULL;
+                }
+                memcpy(word, line + start, size);
+                word[size] = '\0';
+                char **tmp = realloc(res, (nb_word + 2) * sizeof *res);/* +2 : un pour le nouveau mot, un pour le pointeur NULL final */
+                if (!tmp) {
+                    free(word);
+                    return NULL;
+                }
+                res = tmp;
+                res[nb_word] = word;
+                nb_word++;
+                res[nb_word] = NULL;
+            }
+            start = i + 1;
+        }
+    }
+    return res;
+}
+
+void print_str_array(char **tab) {
+    if (!tab)
+        return;
+    int i = 0;
+    while(tab[i]){
+        printf("|%d|%s\n",i, tab[i++]);
+    }
 }
