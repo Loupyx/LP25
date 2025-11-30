@@ -1,5 +1,6 @@
 #ifndef PROCESSUS_H
 #define PROCESSUS_H
+#include <sys/types.h>
 
 /**
  * Informations sur un processus système.
@@ -40,6 +41,8 @@ void print_proc(Proc *p);
  * \param p Pointeur vers le premier élément de la liste de processus.
  */
 void print_cpu(Proc *p);
+
+int send_process_action(pid_t pid, int action_signal, const char *action_name);
 
 
 #endif
