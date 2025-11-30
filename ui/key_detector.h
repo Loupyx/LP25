@@ -8,8 +8,10 @@
  * last_key_pressed garde en mémoire la dernière touche saisie par l'utilisateur.
  */
 typedef struct {
-    int  is_running;              /**< Indique si le programme est en cours d'exécution (booléen). */
-    char last_key_pressed[128];   /**< Dernière touche (ou séquence) pressée par l'utilisateur. */
+    int  is_running;
+    char last_key_pressed[128];
+    // NOUVEAU : PID du processus actuellement sélectionné
+    pid_t selected_pid;     //ATTENTION IL FAUT CHANGER LE NOM DE LA VARIABLE CAR JE NE L'A CONNAIS PAS 
 } programme_state;
 
 /**

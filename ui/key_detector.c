@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h> // Pour les constantes de signaux (SIGSTOP, SIGKILL, etc.)
 
 #include "key_detector.h"
 
