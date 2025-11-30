@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h> // Pour les constantes de signaux (SIGSTOP, SIGKILL, etc.)
-#include "Processus.h"
+#include "./../process/Processus.h"
 #include "key_detector.h"
 
 

@@ -8,8 +8,8 @@
 #define CHAR_SIZE 256
 #define NB_CHAMP 6
 
-//parsing du fichier config
-list_serv add_queue(list_serv list, server *serv) {     //fonction pour ajouter un serveur à la fin de liste
+//fonction pour ajouter un serveur à la fin de liste
+list_serv add_queue(list_serv list, server *serv) {     
     maillon *new = (maillon*)malloc(sizeof(maillon));
     if (!new) { 
         return NULL;
@@ -35,14 +35,15 @@ list_serv add_queue(list_serv list, server *serv) {     //fonction pour ajouter 
     return list;
 }
 
+//parsing du fichier config
 list_serv get_serveur_config(char *path, int *error) {
     FILE *file = NULL;
     list_serv list = NULL;
     server *new = NULL;
     char line[CHAR_SIZE];
     int n;
-    
-    if (strcmp(path,"") == 0) {
+
+    if (!path || strcmp(path,"") == 0 ) {
         path = ".config";
     }
     file = fopen(path, "r");

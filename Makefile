@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -O2
+CFLAGS = -Wall -Wextra -O2 -g -O0
 LDLIBS = -lncurses -lssh
 EXEC = projet
 SRC := $(wildcard *.c */*.c)

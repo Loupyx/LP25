@@ -12,10 +12,24 @@
 /*fonction main */
 int main() {
     int error;
-    list_serv l = get_serveur_config("", &error);
-    ssh_state *state = init_ssh_session(l->serv);
+    list_serv l = get_serveur_config(NULL, &error);
+    if(!l){
+        printf("l main");
+        return 1;
+    }
 
-    char *test = get_char_ssh(state, "/proc/95/stat");
-    printf("%s\n", test);
+    char **l_dir = get_list_dirs("/proc");
+    if(!l_dir){
+        printf("l_dir main\n");
+        return 1;
+    }
+    list_proc l_proc = NULL;
+    error = get_all_proc(&l_proc, NULL, l_dir, LOCAL);
+    fprintf(stderr, "get_all_proc OK\n");
+    if(!l_proc){
+        printf("oeuruzerioze\n");
+        return 1;
+    }
+    print_proc(l_proc);
     return 0;
 }

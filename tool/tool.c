@@ -27,7 +27,7 @@ char *get_char_file(char *path) {
     while ((ic = fgetc(file)) != EOF) {
         c = (char)ic;
         if (c != '\n') {
-            char *temp = (char*)realloc(text, (size+1)*sizeof(char));
+            char *temp = (char*)realloc(text, (size+2)*sizeof(char));
             if (!temp) {
                 free(text);
                 fclose(file);
@@ -40,10 +40,13 @@ char *get_char_file(char *path) {
 
     if (!text) {
         text = malloc(1);
+        fclose(file);
         if (!text) return NULL;
         text[0] = '\0';
         return text;
     }
+
+    fclose(file);
 
     text[size] = '\0';
     return text;
@@ -80,7 +83,6 @@ char **get_list_dirs(const char *path){
             names[nb_dir] = NULL;
         }
     }
-    printf("oui\n");
     return names;
 
 }
@@ -149,25 +151,35 @@ char *get_char_telnet(){
 //AUTRE
 char **split(char *line, char delim) {
     if (!line) {
+        fprintf(stderr, "DEBUG: split got NULL line\n");
         return NULL;
     }
     int n = strlen(line);
     char **res = NULL;
     int nb_word = 0;
     int start = 0;
+    int parenthese = 0;
     
     for (int i = 0; i <= n; ++i) {
-        if (line[i] == delim || line[i] == '\n' || line[i] == '\0') {
+        if(line[i] == '('){
+            parenthese = 1;
+        } else if(line[i] == ')'){
+            parenthese = 0;
+        }
+        if ((line[i] == delim || line[i] == '\n' || line[i] == '\0') && parenthese == 0) {
             int size = i - start;
             if (size > 0) {
                 char *word = malloc(size + 1);
                 if (!word) {
+                    destoy_char(res);
                     return NULL;
                 }
                 memcpy(word, line + start, size);
                 word[size] = '\0';
                 char **tmp = realloc(res, (nb_word + 2) * sizeof *res);/* +2 : un pour le nouveau mot, un pour le pointeur NULL final */
                 if (!tmp) {
+                    destoy_char(tmp);
+                    destoy_char(res);
                     free(word);
                     return NULL;
                 }
@@ -180,6 +192,18 @@ char **split(char *line, char delim) {
         }
     }
     return res;
+}
+
+void destoy_char(char *line[]){
+    int i  = 0;
+    if(!line){
+        return;
+    }
+    while(line[i]){
+        free(line[i]);
+        i++;
+    }
+    return;
 }
 
 int is_number(const char *s) {

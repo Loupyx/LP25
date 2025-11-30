@@ -69,4 +69,6 @@ int is_number(const char *s);
  */
 void print_str_array(char **tab);
 
+void destoy_char(char *line[]);
+
 #endif
