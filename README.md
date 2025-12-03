@@ -26,6 +26,7 @@ Pour créer un serveur SSH, il faut installer "openssh-server" avec la commande\
 ```sudo apt install openssh-server```\
 Ensuite vous pouvez démarrer le serveur :\
 ```sudo systemctl start ssh```\
+Ou en exécutant le fichier ```sshstart```\
 (Vous pouvez faire : ```sudo systemctl enable ssh``` pour activer le démarrage automatique du serveur à l'allumage de la machine 
 et ```sudo systemctl disable ssh``` pour désactiver cette option)\
 Vérifier ensuite que le serveur est bien démarrer :\
