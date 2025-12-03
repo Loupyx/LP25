@@ -15,7 +15,7 @@
 
 #define SIZE_CHAR 300
 
-Proc *add_queue_proc(Proc *list, Proc *p) {
+proc *add_queue_proc(proc *list, proc *p) {
     if (!p) {
         return list;
     }
@@ -25,7 +25,7 @@ Proc *add_queue_proc(Proc *list, Proc *p) {
         return p;
     }
 
-    Proc *temp = list;
+    proc *temp = list;
     while (temp->next) {
         temp = temp->next;
     }
@@ -33,33 +33,43 @@ Proc *add_queue_proc(Proc *list, Proc *p) {
     return list;
 }
 
-
-void print_proc(Proc *p){
+void print_proc(proc *p) {
     fprintf(stderr,
         "------------------------------------\nPID : %d\nPPID : %d\nUser : %s\ncmdline : %s\nState : %c\nCPU : %.3f\nTIME : %f\n",
         p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU, p->time);
 
 }
 
-void print_cpu(Proc *p){
-    printf("CPU : %.3f\n", p->CPU);
-
+void print_l_proc(list_proc l) {
+    if (!l) {
+        printf("Liste NULL\n");
+        return;
+    }
+    list_proc temp = l;
+    while (temp) {
+        print_proc(temp);
+        temp = temp->next;
+    }
 }
 
-Proc* create_proc(){
+void print_cpu(proc *p) {
+    printf("CPU : %.3f\n", p->CPU);
+}
+
+proc* create_proc() {
     //initialisation d'un nouveau processus
-    Proc *new_proc = (Proc*)calloc(1, sizeof(Proc));
-    if(!new_proc){
+    proc *new_proc = (proc*)calloc(1, sizeof(proc));
+    if (!new_proc) {
         fprintf(stderr, "new_proc\n");
         return NULL;
     }
     new_proc->cmdline = (char*)calloc(SIZE_CHAR,sizeof(char));
-    if(!new_proc->cmdline){
+    if (!new_proc->cmdline) {
         fprintf(stderr, "cmdline\n");
         return NULL;
     }
     new_proc->user = (char*)malloc(SIZE_CHAR*sizeof(char));
-    if(!new_proc->user){
+    if (!new_proc->user) {
         fprintf(stderr, "user\n");
         return NULL;
     }
@@ -67,27 +77,27 @@ Proc* create_proc(){
     return new_proc;
 }
 
-int get_processus(Proc **lproc){
+int get_processus(proc **lproc) { //le vieux n'est plus utiliser
     struct dirent *entry;
     DIR *dir = opendir("/proc");
-    if(!dir){
+    if (!dir) {
         return EXIT_FAILURE;
     }
     while ((entry = readdir(dir))) {
-        if(is_number(entry->d_name)){
+        if (is_number(entry->d_name)) {
             char path[SIZE_CHAR],word[SIZE_CHAR], temp[SIZE_CHAR];
             int cpt_word = 0;
             FILE *fichier = NULL;
             long int utime = 0, stime = 0;
-            Proc *new_proc = create_proc();
-            if(!new_proc){
+            proc *new_proc = create_proc();
+            if (!new_proc) {
                 return EXIT_FAILURE;
             }
 
             //récupe la commande du processus
             snprintf(path, sizeof(path), "/proc/%s/cmdline", entry->d_name);
             fichier = fopen(path, "r");
-            if(!fichier){
+            if (!fichier) {
                 return EXIT_FAILURE;
             }
 
@@ -102,14 +112,13 @@ int get_processus(Proc **lproc){
             fichier = fopen(path, "r");
             while (fscanf(fichier, "%127s", word) == 1) {
                 cpt_word++;
-                switch (cpt_word)
-                {
+                switch (cpt_word) {
                 case 1:
                     new_proc->PID = atoi(word);
                     break;
 
                 case 2:
-                    if(strcmp(new_proc->cmdline, "") == 0){
+                    if (strcmp(new_proc->cmdline, "") == 0) {
                         strcpy(new_proc->cmdline, word);
                     }
                     break;
@@ -145,17 +154,19 @@ int get_processus(Proc **lproc){
             fichier = NULL;
             snprintf(path, sizeof(path), "/proc/%s/status", entry->d_name);
             fichier = fopen(path, "r");
-            if(!fichier){
+            if (!fichier) {
                 return EXIT_FAILURE;
             }
 
-            while(fscanf(fichier, "%127s", word) == 1){
-                if(strcmp(word, "Uid:") == 0){
-                    if(fscanf(fichier, "%127s", temp) != 1){
+            while (fscanf(fichier, "%127s", word) == 1) {
+                if (strcmp(word, "Uid:") == 0) {
+                    if (fscanf(fichier, "%127s", temp) != 1) {
                         return EXIT_FAILURE;
                     }
                     struct passwd *pw = getpwuid(atoi(temp));
-                    if(!pw){ return EXIT_FAILURE;}
+                    if (!pw) {
+                        return EXIT_FAILURE;
+                    }
                     strcpy(new_proc->user, pw->pw_name);
                 }
             }
@@ -164,14 +175,14 @@ int get_processus(Proc **lproc){
 
             new_proc->CPU = 0;
 
-            if(new_proc->state == 'S'){
-                if(*lproc == NULL){
+            if (new_proc->state == 'S') {
+                if (*lproc == NULL) {
                     *lproc = new_proc;
-                }else {
+                } else {
                     new_proc->next = *lproc;
                     *lproc = new_proc;
                 }
-            } else{
+            } else {
                 free(new_proc->cmdline);
                 free(new_proc->user);
                 free(new_proc);
@@ -182,12 +193,12 @@ int get_processus(Proc **lproc){
 }
 
 //implémentation de l'envoie du signal au processus
-int send_process_action(pid_t pid, int action_signal, const char *action_name){
-    if (pid <= 1){
+int send_process_action(pid_t pid, int action_signal, const char *action_name) {
+    if (pid <= 1) {
         fprintf(stderr, "erreur action : PID invalide (%d)\n", pid);
         return -1;
     }
-    if (kill(pid, action_signal) == 0){
+    if (kill(pid, action_signal) == 0) {
         fprintf(stderr, "Succes : action '%s' envoyée au PID %d\n", action_name, pid );
         return 0;
     } else {
@@ -196,15 +207,15 @@ int send_process_action(pid_t pid, int action_signal, const char *action_name){
     }
 }
 
-char *get_stat(char *pid, enum acces_type connexion, ssh_state *state){
+char *get_stat(char *pid, enum acces_type connexion, ssh_state *state) {
     char path[SIZE_CHAR], *text;
-    if(connexion == SSH && state == NULL){
+    if (connexion == SSH && state == NULL) {
         fprintf(stderr, "SSH_STATE NULL in *get_stat for PID : %s\n", pid);
         return NULL;
     }
     snprintf(path, sizeof(path), "/proc/%s/stat", pid);
 
-    switch (connexion){
+    switch (connexion) {
         case SSH:
             text = get_char_ssh(state, path);
             break;
@@ -219,30 +230,39 @@ char *get_stat(char *pid, enum acces_type connexion, ssh_state *state){
             return NULL;
             break;
     }
+    if (!text) {
+        fprintf(stderr, "Cannot get char for : %s\n", path);
+    }
     return text;
 }
 
-int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acces_type connexion){
+int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acces_type connexion) {
     int i = 0;
     char **data, *unformated;
     long utime, stime, ticks_per_sec, time;
     double sec;
-    Proc *list = NULL;
+    proc *list = NULL;
 
-    while(list_dir[i]){
+    while (list_dir[i]) {
 
         unformated = get_stat(list_dir[i], connexion, state);
+        if (!unformated) {
+            fprintf(stderr, "return NULL to unformated for : %s\n", list_dir[i]);
+            i++;
+            continue;
+        }
         data = split(unformated, ' ');
 
         if (!data || !data[0]) {
             fprintf(stderr, "split returned empty for '%s'\n", unformated);
             // soit tu skip ce PID, soit tu gères l’erreur
+            continue;
         }
 
         free(unformated);
 
-        Proc *new = create_proc();
-        if(!new){
+        proc *new = create_proc();
+        if (!new) {
             fprintf(stderr, "Can't alloc new in get_all_proc\n");
             return EXIT_FAILURE;
         }
@@ -250,7 +270,7 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
         if (!data[1] || !data[2] || !data[3] || !data[4] || !data[14] || !data[15]) {
             fprintf(stderr, "ligne /proc/%s/stat pas assez longue\n", list_dir[i]);
             free(new);
-        }else{
+        } else {
             new->PID = atoi(data[0]);
             strcpy(new->cmdline, data[1]);
             new->user = "CODE NOM DE DIEU";
@@ -265,13 +285,11 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
             list = add_queue_proc(list, new);
         }
         
-        for (int j = 0; data[j] != NULL; ++j){
+        for (int j = 0; data[j] != NULL; ++j) {
             free(data[j]);
         }
-        
         ++i;
     }
-
     *lproc = list;
     return EXIT_SUCCESS;
 }

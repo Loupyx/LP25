@@ -13,7 +13,7 @@
 
 //LOCAL
 char *get_char_file(char *path) {
-    if(!path){
+    if (!path) {
         return NULL;
     }
     FILE *file;
@@ -52,7 +52,7 @@ char *get_char_file(char *path) {
     return text;
 }
 
-char **get_list_dirs(const char *path){
+char **get_list_dirs(const char *path) {
     DIR *dir;
     struct dirent *entry;
     char **names = NULL;
@@ -63,8 +63,9 @@ char **get_list_dirs(const char *path){
         return NULL;
     }
     while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
+        }
 
         if (entry->d_type == DT_DIR && is_number(entry->d_name) == 1) {
             size = strlen(entry->d_name);
@@ -88,34 +89,36 @@ char **get_list_dirs(const char *path){
 }
 
 //SSH
-char *get_char_ssh(ssh_state *state, char *path){
+char *get_char_ssh(ssh_state *state, char *path) {
+    char command[256];
     if (!path) {
         fprintf(stderr, "get_char_ssh : path\n");
-        return "NULL";
+        return NULL;
     }
 
     if (!state) {
         fprintf(stderr, "get_char_ssh : state\n");
-        return "NULL";
+        return NULL;
     }
 
     ssh_channel chan = ssh_channel_new(state->session);
     if (!chan) {
         fprintf(stderr, "get_char_ssh : channel\n");
-        return "NULL";
+        return NULL;
     }
 
     if (ssh_channel_open_session(chan) != SSH_OK) {
         ssh_channel_free(chan);
         fprintf(stderr, "get_char_ssh : channel session\n");
-        return "NULL";
+        return NULL;
     }
 
-    if (ssh_channel_request_exec(chan, "cat /proc/self/stat") != SSH_OK) {
+    snprintf(command, sizeof(command), "cat %s", path);
+    if (ssh_channel_request_exec(chan, command) != SSH_OK) {
         ssh_channel_close(chan);
         ssh_channel_free(chan);
         fprintf(stderr, "get_char_ssh : channel cat\n");
-        return "NULL";
+        return NULL;
     }
 
     char *text = NULL, c;
@@ -123,7 +126,7 @@ char *get_char_ssh(ssh_state *state, char *path){
     int n;
     while ((n = ssh_channel_read(chan, &c, 1, 0)) > 0) {
         if (c != '\n') {
-            char *temp = (char*)realloc(text, (size+1)*sizeof(char));
+            char *temp = (char*)realloc(text, (size+2)*sizeof(char));
             if (!temp) {
                 free(text);
                 ssh_channel_send_eof(chan);
@@ -140,9 +143,92 @@ char *get_char_ssh(ssh_state *state, char *path){
     ssh_channel_close(chan);
     ssh_channel_free(chan);
     return text;
-
 }
 
+char **get_ssh_dir(ssh_state *state, char *path) {
+    if (!state || !state->session || !path) {
+        fprintf(stderr, "get_ssh_dir: bad arguments\n");
+        return NULL;
+    }
+
+    sftp_session sftp = sftp_new(state->session);
+    if (!sftp) {
+        fprintf(stderr, "get_ssh_dir: sftp_new failed\n");
+        return NULL;
+    }
+
+    if (sftp_init(sftp) != SSH_OK) {
+        fprintf(stderr, "get_ssh_dir: sftp_init failed: %s\n", ssh_get_error(state->session));
+        sftp_free(sftp);
+        return NULL;
+    }
+
+    sftp_dir dir = sftp_opendir(sftp, path);
+    if (!dir) {
+        fprintf(stderr, "get_ssh_dir: sftp_opendir('%s') failed: %s\n", path, ssh_get_error(state->session));
+        sftp_free(sftp);
+        return NULL;
+    }
+
+    char **res = NULL;
+    int size, nb_dir = 0;
+
+    while (!sftp_dir_eof(dir)) {
+        sftp_attributes attrs = sftp_readdir(sftp, dir);
+        if (!attrs) {
+            continue;
+        }
+        if (is_number(attrs->name)) {
+            char **temp = (char**)realloc(res, (nb_dir+1)*sizeof(char*));
+            if (!temp) {
+                sftp_attributes_free(attrs);
+                free_ssh_dir(res);
+                sftp_closedir(dir);
+                sftp_free(sftp);
+                return NULL;
+            }
+            res = temp;
+            
+            size = strlen(attrs->name);
+            res[nb_dir] = (char*)malloc(sizeof(char)*(size+1));
+            if (!res[nb_dir]) {
+                fprintf(stderr, "get_ssh_dir: malloc failed\n");
+                sftp_attributes_free(attrs);
+                free_ssh_dir(res);
+                sftp_closedir(dir);
+                sftp_free(sftp);
+                return NULL;
+            }
+
+            memcpy(res[nb_dir], attrs->name, size + 1);
+            nb_dir++;
+        }
+    }
+
+    char **tmp = realloc(res, (nb_dir + 1) * sizeof(char *));
+    if (!tmp && nb_dir > 0) {
+        // cas très rare, mais on gère proprement
+        fprintf(stderr, "get_ssh_dir: final realloc failed\n");
+        free_ssh_dir(res);
+        sftp_closedir(dir);
+        sftp_free(sftp);
+        return NULL;
+    }
+    res = tmp;
+    res[nb_dir] = NULL;
+    sftp_closedir(dir);
+    sftp_free(sftp);
+    fprintf(stderr, "%d\n", nb_dir);
+    return res;
+}
+
+void free_ssh_dir(char **list) {
+    if (!list) return;
+    for (int i=0; list[i]!=NULL; ++i) {
+        free(list[i]);
+    }
+    free(list);
+}
 //TELNET
 char *get_char_telnet(){
     return "à faire";
@@ -161,9 +247,9 @@ char **split(char *line, char delim) {
     int parenthese = 0;
     
     for (int i = 0; i <= n; ++i) {
-        if(line[i] == '('){
+        if (line[i] == '(') {
             parenthese = 1;
-        } else if(line[i] == ')'){
+        } else if (line[i] == ')') {
             parenthese = 0;
         }
         if ((line[i] == delim || line[i] == '\n' || line[i] == '\0') && parenthese == 0) {
@@ -195,20 +281,18 @@ char **split(char *line, char delim) {
 }
 
 void destoy_char(char *line[]){
-    int i  = 0;
-    if(!line){
+    if (!line) {
         return;
     }
-    while(line[i]){
+    for (int i=0; line[i]; i++) {
         free(line[i]);
-        i++;
     }
     return;
 }
 
 int is_number(const char *s) {
-    for (size_t i = 0; s[i]; i++){
-        if (!isdigit((unsigned char)s[i])){
+    for (size_t i = 0; s[i]; i++) {
+        if (!isdigit((unsigned char)s[i])) {
             return 0;
         }
     }
@@ -216,10 +300,10 @@ int is_number(const char *s) {
 }
 
 void print_str_array(char **tab) {
-    if (!tab)
+    if (!tab){
         return;
-    int i = 0;
-    while(tab[i]){
-        printf("|%d|%s\n",i, tab[i++]);
+    }
+    for (int i=0; tab[i]; i++) {
+        printf("|%d|%s\n",i, tab[i]);
     }
 }

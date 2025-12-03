@@ -4,10 +4,13 @@
 
 #include "./../network/network_SSH.h"
 
+/**
+ * Types d'accès possibles à une machine distante ou locale.
+ */
 enum acces_type{
-    SSH,
-    LOCAL,
-    TELNET,
+    SSH,    /**< Accès via le protocole SSH. */
+    LOCAL,  /**< Accès local (sur la machine courante). */
+    TELNET, /**< Accès via le protocole Telnet. */
 };
 
 /**
@@ -26,9 +29,15 @@ typedef struct proc_{
     double CPU;          /**< Pourcentage ou part d'utilisation CPU. */
     double time;         /**< Temps CPU consommé ou temps d'exécution. */
     struct proc_ *next;   /**< Pointeur vers le processus suivant dans la liste. */
-} Proc;
+} proc;
 
-typedef Proc *list_proc;
+/**
+ * Liste chaînée de processus.
+ *
+ * Représentée par un pointeur vers le premier élément proc de la liste,
+ * ou NULL si la liste est vide.
+ */
+typedef proc *list_proc;
 
 /**
  * Ajoute un processus à la fin d'une file (liste chaînée de processus).
@@ -37,9 +46,9 @@ typedef Proc *list_proc;
  * \param p    Processus à ajouter à la file.
  * \return Nouvelle tête de liste (identique ou mise à jour).
  */
-Proc *add_queue_proc(Proc *list, Proc *p);
+proc *add_queue_proc(proc *list, proc *p);
 
-int get_all_proc(Proc **lproc, ssh_state *state, char *list_dir[], enum acces_type connexion);
+int get_all_proc(proc **lproc, ssh_state *state, char *list_dir[], enum acces_type connexion);
 
 /**
  * Récupère la liste des processus et remplit une liste chaînée.
@@ -47,23 +56,44 @@ int get_all_proc(Proc **lproc, ssh_state *state, char *list_dir[], enum acces_ty
  * \param lproc Pointeur vers la tête de liste de processus à initialiser.
  * \return 0 en cas de succès, une valeur non nulle en cas d'erreur.
  */
-int get_processus(Proc **lproc);
+int get_processus(proc **lproc);
 
 /**
  * Affiche les informations d'un processus.
  *
- * \param p Pointeur vers la structure Proc à afficher.
+ * \param p Pointeur vers la structure proc à afficher.
  */
-void print_proc(Proc *p);
+void print_proc(proc *p);
+
+/**
+ * Affiche la liste des processus système.
+ *
+ * Parcourt la liste chaînée de processus et affiche les informations
+ * de chaque processus (PID, PPID, utilisateur, commande, état, CPU, etc.)
+ * dans un format lisible.
+ *
+ * \param l Liste de processus à afficher (tête de liste).
+ */
+void print_l_proc(list_proc l);
 
 /**
  * Affiche l'utilisation CPU de tous les processus de la liste.
  *
  * \param p Pointeur vers le premier élément de la liste de processus.
  */
-void print_cpu(Proc *p);
+void print_cpu(proc *p);
 
+/**
+ * Envoie une action à un processus via un signal.
+ *
+ * Utilise le PID fourni pour envoyer le signal donné au processus ciblé,
+ * en associant ce signal à un nom d'action pour la journalisation ou l'affichage.
+ *
+ * \param pid           PID du processus cible.
+ * \param action_signal Signal à envoyer (par ex. SIGTERM, SIGKILL, SIGSTOP).
+ * \param action_name   Nom symbolique de l'action (par ex. "kill", "stop"), utilisé pour les messages.
+ * \return 0 en cas de succès, une valeur non nulle en cas d'erreur (par ex. si le signal n'a pas pu être envoyé).
+ */
 int send_process_action(pid_t pid, int action_signal, const char *action_name);
-
 
 #endif

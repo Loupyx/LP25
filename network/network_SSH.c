@@ -27,7 +27,7 @@ list_serv add_queue(list_serv list, server *serv) {
     }
 
     maillon *temp = list->next;
-    while(temp->next) {
+    while (temp->next) {
         temp = temp->next;
     }
     temp->next = new;
@@ -71,7 +71,7 @@ list_serv get_serveur_config(char *path, int *error) {
         int start = 0;
         int cpt_word = 0;
 
-        for (int i = 0; i <= n; i++) {
+        for (int i=0; i<=n; i++) {
             if (line[i] == ':' || line[i] == '\0') {
                 int size = i - start;
                 char *word = (char*)malloc(size + 1);
@@ -174,9 +174,9 @@ void destroy_server(server *serv) {
 //fin parsing
 
 //SSH
-ssh_state *init_ssh_session(server *serv){
+ssh_state *init_ssh_session(server *serv) {
     ssh_state *state = (ssh_state*)malloc(sizeof(ssh_state));
-    if(!state){
+    if (!state) {
         fprintf(stderr, "Erreur allocation ssh_state");
         return NULL;
     }
@@ -228,7 +228,7 @@ ssh_state *init_ssh_session(server *serv){
     return state;
 }
 
-int open_dir_ssh(ssh_state *state){
+int open_dir_ssh(ssh_state *state) {
     char *path = "/proc";
 
     state->dir = sftp_opendir(state->sftp, path);
@@ -237,20 +237,15 @@ int open_dir_ssh(ssh_state *state){
         destroy_ssh_state(state);
         return 1;
     }
-
-    printf("Contenu de %s :\n", path);
-
     while ((state->attr = sftp_readdir(state->sftp, state->dir)) != NULL) {//Lire les entrées du dossier
         printf("- %s\n", state->attr->name);
         sftp_attributes_free(state->attr);
     }
-    printf("-------Fin-------\n");
-
     return 0;
 
 }
 
-int close_dir_ssh(ssh_state *state){
+int close_dir_ssh(ssh_state *state) {
     state->rc = sftp_closedir(state->dir);
     if (state->rc != SSH_OK) {
         fprintf(stderr, "Erreur sftp_closedir: %s\n", ssh_get_error(state->sftp));

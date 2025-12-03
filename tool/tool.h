@@ -36,6 +36,29 @@ char **get_list_dirs(const char *path);
  */
 char *get_char_ssh(ssh_state *state, char *path);
 
+/**
+ * Récupère la liste des fichiers et répertoires d'un dossier distant via SSH/SFTP.
+ *
+ * Ouvre le répertoire indiqué sur le serveur distant, lit les entrées
+ * et renvoie un tableau de chaînes terminées par NULL contenant les noms.
+ * La mémoire du tableau et des chaînes doit être libérée par l'appelant,
+ * par exemple avec free_ssh_dir.
+ *
+ * \param state État de la session SSH/SFTP à utiliser.
+ * \param path  Chemin du répertoire distant à lister.
+ * \return Tableau de chaînes (char **), terminé par NULL, ou NULL en cas d'erreur.
+ */
+char **get_ssh_dir(ssh_state *state, char *path);
+
+/**
+ * Libère la mémoire associée à une liste de chaînes allouées par get_ssh_dir.
+ *
+ * Parcourt le tableau, libère chaque chaîne puis le tableau lui‑même.
+ *
+ * \param list Tableau de chaînes à libérer (peut être NULL).
+ */
+void free_ssh_dir(char **list);
+
 char *get_char_telnet();
 
 /**
@@ -69,6 +92,14 @@ int is_number(const char *s);
  */
 void print_str_array(char **tab);
 
+/**
+ * Libère un tableau de chaînes de caractères.
+ *
+ * Parcourt le tableau de chaînes terminé par un pointeur NULL
+ * et libère chaque élément, puis le tableau lui‑même si nécessaire.
+ *
+ * \param line Tableau de chaînes de caractères à détruire.
+ */
 void destoy_char(char *line[]);
 
 #endif
