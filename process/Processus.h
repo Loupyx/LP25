@@ -48,15 +48,20 @@ typedef proc *list_proc;
  */
 proc *add_queue_proc(proc *list, proc *p);
 
-int get_all_proc(proc **lproc, ssh_state *state, char *list_dir[], enum acces_type connexion);
-
 /**
- * Récupère la liste des processus et remplit une liste chaînée.
+ * Récupère la liste des processus selon le mode d'accès demandé.
  *
- * \param lproc Pointeur vers la tête de liste de processus à initialiser.
- * \return 0 en cas de succès, une valeur non nulle en cas d'erreur.
+ * En fonction du type de connexion (LOCAL, SSH, TELNET), remplit une liste
+ * chaînée de processus à partir des informations trouvées localement ou à
+ * distance (par exemple via /proc ou des commandes exécutées sur la machine cible).
+ *
+ * \param lproc     Pointeur vers la tête de liste de processus à remplir.
+ * \param state     État de la session SSH à utiliser si la connexion est SSH (peut être NULL sinon).
+ * \param list_dir  Liste de répertoires des processus.
+ * \param connexion Type d’accès utilisé (LOCAL, SSH ou TELNET).
+ * \return 0 en cas de succès, une valeur non nulle en cas d’erreur.
  */
-int get_processus(proc **lproc);
+int get_all_proc(proc **lproc, ssh_state *state, char *list_dir[], enum acces_type connexion);
 
 /**
  * Affiche les informations d'un processus.

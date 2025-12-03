@@ -29,7 +29,7 @@ int main() {
     }
 
     list_proc l_proc = NULL;
-    error = get_all_proc(&l_proc, serv, l_dir, SSH);
+    error = get_all_proc(&l_proc, serv, l_dir, LOCAL);
     fprintf(stderr, "get_all_proc OK\n");
     if(!l_proc){
         printf("oeuruzerioze\n");
