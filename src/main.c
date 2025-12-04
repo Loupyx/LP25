@@ -9,7 +9,11 @@
 #include "ui/key_detector.h"
 #include "network/network_SSH.h"
 #include "process/Processus.h"
+#include "network/network_telnet.h"
 #include "tool/tool.h"
+
+
+
 
 int opt; // c'est tout ce qu'on met après ./projet, ce qu'on va analyser
 int dry_run = 0;      // va servir à tester l'accès à la liste des process sans les afficher (si c'est 1, on teste sans afficher, si non on affichera )
