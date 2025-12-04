@@ -28,7 +28,8 @@ typedef struct proc_{
     char state;          /**< État du processus (par ex. 'R', 'S', 'Z'...). */
     double CPU;          /**< Pourcentage ou part d'utilisation CPU. */
     double time;         /**< Temps CPU consommé ou temps d'exécution. */
-    struct proc_ *next;   /**< Pointeur vers le processus suivant dans la liste. */
+    long vsize;          /**< Taille mémoire utilisé.  */
+    struct proc_ *next;  /**< Pointeur vers le processus suivant dans la liste. */
 } proc;
 
 /**

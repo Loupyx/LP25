@@ -35,8 +35,8 @@ proc *add_queue_proc(proc *list, proc *p) {
 
 void print_proc(proc *p) {
     fprintf(stderr,
-        "------------------------------------\nPID : %d\nPPID : %d\nUser : %s\ncmdline : %s\nState : %c\nCPU : %.3f\nTIME : %f\n",
-        p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU, p->time);
+        "------------------------------------\nPID : %d\nPPID : %d\nUser : %s\ncmdline : %s\nState : %c\nCPU : %.3f\nVsize : %ldko\nTIME : %.2f\n",
+        p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU,p->vsize, p->time);
 
 }
 
@@ -92,13 +92,13 @@ int send_process_action(pid_t pid, int action_signal, const char *action_name) {
     }
 }
 
-char *get_stat(char *pid, enum acces_type connexion, ssh_state *state) {
+char *get_char(char *pid, char *file, enum acces_type connexion, ssh_state *state) {
     char path[SIZE_CHAR], *text;
     if (connexion == SSH && state == NULL) {
         fprintf(stderr, "SSH_STATE NULL in *get_stat for PID : %s\n", pid);
         return NULL;
     }
-    snprintf(path, sizeof(path), "/proc/%s/stat", pid);
+    snprintf(path, sizeof(path), "/proc/%s/%s", pid, file);
 
     switch (connexion) {
         case SSH:
@@ -130,7 +130,8 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
 
     while (list_dir[i]) {
 
-        unformated = get_stat(list_dir[i], connexion, state);
+        //stat
+        unformated = get_char(list_dir[i], "stat", connexion, state);
         if (!unformated) {
             fprintf(stderr, "return NULL to unformated for : %s\n", list_dir[i]);
             i++;
@@ -140,7 +141,8 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
 
         if (!data || !data[0]) {
             fprintf(stderr, "split returned empty for '%s'\n", unformated);
-            // soit tu skip ce PID, soit tu gères l’erreur
+            //skip ce PID
+            i++;
             continue;
         }
 
@@ -158,21 +160,52 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
         } else {
             new->PID = atoi(data[0]);
             strcpy(new->cmdline, data[1]);
-            new->user = "CODE NOM DE DIEU";
             new->state = data[2][0];
             new->PPID = atoi(data[3]);
+            new->vsize = atol(data[22])/8000;
             utime = atol(data[14]);
             stime = atol(data[15]);
             time = utime+stime;
             ticks_per_sec = sysconf(_SC_CLK_TCK);
             sec = (double)time/(double)ticks_per_sec;
             new->time = sec;
-            list = add_queue_proc(list, new);
         }
         
         for (int j = 0; data[j] != NULL; ++j) {
             free(data[j]);
         }
+        //fin stat
+
+
+        //debut status
+        unformated = get_char(list_dir[i], "status", connexion, state);
+        if (!unformated) {
+            fprintf(stderr, "return NULL to unformated for : %s\n", list_dir[i]);
+            i++;
+            continue;
+        }
+        data = split(unformated, '\t');
+
+        if (!data || !data[0]) {
+            fprintf(stderr, "split returned empty for '%s'\n", unformated);
+            //skip ce PID
+            i++;
+            continue;
+        }
+
+        char **temp = data;
+        if(temp && temp[9]){
+            int transpho = atoi(temp[9]);
+            struct passwd *pw = getpwuid(transpho);
+            if (!pw || !pw->pw_name) { 
+                fprintf(stderr, "error pw\n");
+                i++;
+                continue;
+            }
+            strncpy(new->user, pw->pw_name, sizeof(pw->pw_name));
+        }
+
+        list = add_queue_proc(list, new);
         ++i;
     }
     *lproc = list;
