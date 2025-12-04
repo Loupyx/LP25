@@ -7,38 +7,18 @@
 #include "ui/key_detector.h"
 #include "network/network_SSH.h"
 #include "process/Processus.h"
-#include "tool/tool.h"
+#include "network/network_telnet.h"
+
+
+
 
 /*fonction main */
-int main() {
-    int error;
+int main(){
+    char *path_to_config = "";
+    int error = CONTINUE;
+    list_serv l = get_serveur_config(path_to_config, &error);
 
-    //création du client SSH
-    list_serv l = get_serveur_config(NULL, &error);
-    if(!l){
-        printf("l main");
-        return 1;
-    }
-    ssh_state *serv = init_ssh_session(l->serv); //choisir le bon serv
-
+    printf("OK : %d\n", error);
     
-    char **l_dir = get_list_dirs("/proc");
-    if(!l_dir){
-        printf("l_dir main\n");
-        return 1;
-    }
-
-    list_proc l_proc = NULL;
-    error = get_all_proc(&l_proc, serv, l_dir, LOCAL);
-    fprintf(stderr, "get_all_proc OK\n");
-    if(!l_proc){
-        printf("l_proc\n");
-        return 1;
-    }
-    print_l_proc(l_proc);
-    while(1){
-        fprintf(stderr, "updating ...\n");
-        error = update_l_proc(&l_proc, serv, l_dir, LOCAL);
-    }
-    return 0;
+    return error;
 }
