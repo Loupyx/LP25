@@ -9,7 +9,10 @@
 #include "ui/key_detector.h"
 #include "network/network_SSH.h"
 #include "process/Processus.h"
-#include "tool/tool.h"
+#include "network/network_telnet.h"
+
+
+
 
 /*fonction main */
 int main(int argc, char *argv[]){
