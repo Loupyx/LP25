@@ -35,6 +35,6 @@ int main() {
         printf("l_proc\n");
         return 1;
     }
-    print_l_proc(l_proc);
+    //print_l_proc(l_proc);
     return 0;
 }

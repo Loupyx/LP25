@@ -218,7 +218,6 @@ char **get_ssh_dir(ssh_state *state, char *path) {
     res[nb_dir] = NULL;
     sftp_closedir(dir);
     sftp_free(sftp);
-    fprintf(stderr, "%d\n", nb_dir);
     return res;
 }
 

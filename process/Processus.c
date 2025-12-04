@@ -7,12 +7,14 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <signal.h>
 #include <errno.h>
 #include "Processus.h"
 #include "./../tool/tool.h"
 #include "./../network/network_SSH.h"
 
+#define DT 0.1
 #define SIZE_CHAR 300
 
 proc *add_queue_proc(proc *list, proc *p) {
@@ -124,8 +126,8 @@ char *get_char(char *pid, char *file, enum acces_type connexion, ssh_state *stat
 int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acces_type connexion) {
     int i = 0;
     char **data, *unformated;
-    long utime, stime, ticks_per_sec, time;
-    double sec;
+    long utime, stime, ticks_per_sec, time, nstime, nutime, ntime, dtick;
+    double sec, cpu, sleeptime;
     proc *list = NULL;
 
     while (list_dir[i]) {
@@ -145,7 +147,6 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
             i++;
             continue;
         }
-
         free(unformated);
 
         proc *new = create_proc();
@@ -157,6 +158,8 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
         if (!data[1] || !data[2] || !data[3] || !data[4] || !data[14] || !data[15]) {
             fprintf(stderr, "ligne /proc/%s/stat pas assez longue\n", list_dir[i]);
             free(new);
+            i++;
+            continue;
         } else {
             new->PID = atoi(data[0]);
             strcpy(new->cmdline, data[1]);
@@ -170,10 +173,23 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
             sec = (double)time/(double)ticks_per_sec;
             new->time = sec;
         }
-        
-        for (int j = 0; data[j] != NULL; ++j) {
-            free(data[j]);
-        }
+        destoy_char(data);
+
+        // CPU
+        struct timespec ts;
+        ts.tv_sec  = (time_t)DT;
+        ts.tv_nsec = (long)((DT - ts.tv_sec) * 1e9);
+        nanosleep(&ts, NULL);  // POSIX
+        unformated = get_char(list_dir[i], "stat", connexion, state);
+        data = split(unformated, ' ');
+        free(unformated);
+        nutime = atol(data[14]);
+        nstime = atol(data[15]);
+        ntime = nutime + nstime;
+        dtick = ntime - time;
+        cpu = (double)dtick/(double)(DT*ticks_per_sec);
+        new->CPU = cpu*100;
+        destoy_char(data);
         //fin stat
 
 
