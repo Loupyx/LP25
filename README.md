@@ -12,9 +12,10 @@ Ce projet prend place dans l'UE LP25, enseignée à l'UTMB lors du semestre A25.
 Ce projet dépend de plusieurs bibliothèques :
 - Ncurses
 - libssh
+- libtelnet
 
 Pour les installer sur Ubuntu faites :\
-```sudo apt install libncurses5-dev libncursesw5-dev libssh-dev```
+```sudo apt install libncurses5-dev libncursesw5-dev libssh-dev libtelnet-dev```
 
 ## Configuration
 Une fois toutes les dépendances installez faites\
