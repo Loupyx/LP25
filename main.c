@@ -22,7 +22,7 @@ int main() {
     ssh_state *serv = init_ssh_session(l->serv); //choisir le bon serv
 
     
-    char **l_dir = get_ssh_dir(serv, "/proc");
+    char **l_dir = get_list_dirs("/proc");
     if(!l_dir){
         printf("l_dir main\n");
         return 1;
@@ -35,6 +35,10 @@ int main() {
         printf("l_proc\n");
         return 1;
     }
-    //print_l_proc(l_proc);
+    print_l_proc(l_proc);
+    while(1){
+        fprintf(stderr, "updating ...\n");
+        error = update_l_proc(&l_proc, serv, l_dir, LOCAL);
+    }
     return 0;
 }

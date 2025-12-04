@@ -30,6 +30,7 @@ typedef struct proc_{
     double time;         /**< Temps CPU consommé ou temps d'exécution. */
     long vsize;          /**< Taille mémoire utilisé.  */
     struct proc_ *next;  /**< Pointeur vers le processus suivant dans la liste. */
+    struct proc_ *prev;  /**< Pointeur vers le processus précédent dans la liste. */
 } proc;
 
 /**
@@ -63,6 +64,8 @@ proc *add_queue_proc(proc *list, proc *p);
  * \return 0 en cas de succès, une valeur non nulle en cas d’erreur.
  */
 int get_all_proc(proc **lproc, ssh_state *state, char *list_dir[], enum acces_type connexion);
+
+int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acces_type connexion);
 
 /**
  * Affiche les informations d'un processus.

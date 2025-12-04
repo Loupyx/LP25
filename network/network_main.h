@@ -5,7 +5,7 @@
 #define NB_CHAMP 6
 
 /**
- * Codes d'erreur possibles lors du parsing de la configuration serveur.
+ * Codes d'erreurs possibles lors du parsing de la configuration serveur.
  */
 enum error_parsing {
     CONTINUE,        /**< Aucune erreur bloquante, le parsing peut continuer. */
