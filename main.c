@@ -32,9 +32,9 @@ int main() {
     error = get_all_proc(&l_proc, serv, l_dir, LOCAL);
     fprintf(stderr, "get_all_proc OK\n");
     if(!l_proc){
-        printf("oeuruzerioze\n");
+        printf("l_proc\n");
         return 1;
     }
-    print_proc(l_proc);
+    print_l_proc(l_proc);
     return 0;
 }

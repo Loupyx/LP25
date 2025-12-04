@@ -35,7 +35,7 @@ proc *add_queue_proc(proc *list, proc *p) {
 
 void print_proc(proc *p) {
     fprintf(stderr,
-        "------------------------------------\nPID : %d\nPPID : %d\nUser : %s\ncmdline : %s\nState : %c\nCPU : %.3f\nVsize : %ldko\nTIME : %.2f\n",
+        "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\n",
         p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU,p->vsize, p->time);
 
 }
@@ -202,7 +202,7 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
                 i++;
                 continue;
             }
-            strncpy(new->user, pw->pw_name, sizeof(pw->pw_name));
+            strncpy(new->user, pw->pw_name, 30);
         }
 
         list = add_queue_proc(list, new);
