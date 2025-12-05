@@ -1,5 +1,6 @@
 #ifndef KEY_DETECTOR_H
 #define KEY_DETECTOR_H
+#include <sys/types.h>
 
 /**
  * Représente l'état global du programme pour l'interface ncurses.
@@ -10,6 +11,7 @@
 typedef struct {
     int  is_running;              /**< Indique si le programme est en cours d'exécution (booléen). */
     char last_key_pressed[128];   /**< Dernière touche (ou séquence) pressée par l'utilisateur. */
+    pid_t selected_pid;
 } programme_state;
 
 /**

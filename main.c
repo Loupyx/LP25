@@ -3,35 +3,42 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "ui/key_detector.h"
 #include "network/network_SSH.h"
 #include "process/Processus.h"
-
-
-
+#include "tool/tool.h"
 
 /*fonction main */
-int main(){
-    char *path_to_config = "";
-    int error = CONTINUE;
-    list_serv l = get_serveur_config(path_to_config, &error);
-    ssh_state *state = NULL;
-    state = init_ssh_session(l->serv);
-    if(!state){
-        printf("Erreur main : init_ssh_session (line 18)\n");
-        return EXIT_FAILURE;
-    }
+int main() {
+    int error;
 
-    if ((error != CONTINUE && error != SERVER_SKIPED) || l == NULL) {
-        fprintf(stderr, "Erreur get_serveur_config: %d\n", error);
+    //création du client SSH
+    list_serv l = get_serveur_config(NULL, &error);
+    if(!l){
+        printf("l main");
+        return 1;
+    }
+    ssh_state *serv = init_ssh_session(l->serv); //choisir le bon serv
+
+    
+    char **l_dir = get_list_dirs("/proc");
+    if(!l_dir){
+        printf("l_dir main\n");
         return 1;
     }
 
-    open_dir_ssh(state);
-    close_dir_ssh(state);
-
-    print_list_serv(l);
-    destroy_ssh_state(state);
-
-    return error;
+    list_proc l_proc = NULL;
+    error = get_all_proc(&l_proc, serv, l_dir, LOCAL);
+    fprintf(stderr, "get_all_proc OK\n");
+    if(!l_proc){
+        printf("l_proc\n");
+        return 1;
+    }
+    print_l_proc(l_proc);
+    while(1){
+        fprintf(stderr, "updating ...\n");
+        error = update_l_proc(&l_proc, serv, l_dir, LOCAL);
+    }
+    return 0;
 }

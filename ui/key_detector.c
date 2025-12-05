@@ -3,8 +3,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <signal.h> // Pour les constantes de signaux (SIGSTOP, SIGKILL, etc.)
+#include "./../process/Processus.h"
 #include "key_detector.h"
+
 
 /*initilisation de ncurses
 WINDOW* est un pointeur vers la fenetre principale (stdscr)*/
@@ -43,6 +45,7 @@ void handle_input(programme_state *state){
         return;     //aucune touche pressee
     }
     const char *key_name = NULL;
+    pid_t target_pid = state->selected_pid;
 
     switch (key){       //creation des cas en fonction des touches pressees
         case KEY_F(1):
@@ -59,19 +62,23 @@ void handle_input(programme_state *state){
             break;
         case KEY_F(5):
             key_name = "F5 (pause processus)\n";
+            send_process_action(target_pid, SIGSTOP, "Pause");     
             break;
         case KEY_F(6):
             key_name = "F6 (arret processus)\n";
+            send_process_action(target_pid, SIGTERM, "Arret");     
             break;
         case KEY_F(7):
             key_name = "F7 (tuer/kill le processus )\n";
+            send_process_action(target_pid, SIGKILL, "Kill");  
             break;
         case KEY_F(8):
             key_name = "F8 (redemarrer/reprendre le processus)\n";
+            send_process_action(target_pid,SIGCONT, "Reprise");     
             break;
         case 'q':
             state->is_running =0;   //permet de quitter la boucle 
-            key_name = "'q' (quitter)\n";
+            key_name = "'q' (quitter)";
             break;
         case KEY_RESIZE:        //permet le redimmensionnement du terminal
             key_name = "terminal redimensionne (KEY_RESIZE)\n";
