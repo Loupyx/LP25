@@ -24,10 +24,13 @@ ssh_state *init_ssh_session(server *serv) {
         return NULL;
     }
 
+    char port_str[6]; 
+    snprintf(port_str, sizeof(port_str), "%d", serv->port);
+
     ssh_options_set(state->session, SSH_OPTIONS_HOST, serv->adresse);
     ssh_options_set(state->session, SSH_OPTIONS_USER, serv->username);
-    ssh_options_set(state->session, SSH_OPTIONS_PORT, &serv->port);
-
+    ssh_options_set(state->session, SSH_OPTIONS_PORT_STR, port_str);
+   
     state->rc = ssh_connect(state->session); //connexion
     if (state->rc != SSH_OK) {
         fprintf(stderr, "Erreur de connexion: %s\n", ssh_get_error(state->session));
@@ -60,6 +63,58 @@ ssh_state *init_ssh_session(server *serv) {
     printf("Connexion réussi\n");
     return state;
 }
+
+/**
+ * @brief Exécute une commande shell simple sur la session SSH distante.
+ * * N'effectue aucune capture de sortie, uniquement la vérification du statut d'exécution.
+ * * \param state   État de session SSH valide.
+ * \param command Chaîne de commande à exécuter (ex: "kill -9 1234").
+ * \return Le code de sortie de la commande distante (0 pour succès), ou -1 en cas d'erreur SSH.
+ */
+int ssh_exec_command(ssh_state *state, const char *command) {
+    ssh_channel chan = NULL;
+    int exit_status = -1;
+
+    if (!state || !state->session || !command) {
+        fprintf(stderr, "ssh_exec_command: Etat SSH ou commande invalide.\n");
+        return -1;
+    }
+
+    chan = ssh_channel_new(state->session);
+    if (!chan) {
+        fprintf(stderr, "ssh_exec_command: Erreur ssh_channel_new.\n");
+        return -1;
+    }
+
+    if (ssh_channel_open_session(chan) != SSH_OK) {
+        fprintf(stderr, "ssh_exec_command: Erreur ssh_channel_open_session: %s\n", ssh_get_error(state->session));
+        ssh_channel_free(chan);
+        return -1;
+    }
+
+    if (ssh_channel_request_exec(chan, command) != SSH_OK) {
+        fprintf(stderr, "ssh_exec_command: Erreur ssh_channel_request_exec (commande: %s): %s\n", command, ssh_get_error(state->session));
+        ssh_channel_close(chan);
+        ssh_channel_free(chan);
+        return -1;
+    }
+
+    // Attendre la fin de l'exécution et fermer le canal
+    ssh_channel_send_eof(chan);
+    ssh_channel_wait_closed(chan);
+
+    // Récupérer le statut de sortie de la commande distante
+    if (ssh_channel_get_exit_status(chan, &exit_status) != SSH_OK) {
+        fprintf(stderr, "ssh_exec_command: Erreur lors de la recuperation du statut de sortie.\n");
+        exit_status = -1;
+    }
+    
+    ssh_channel_close(chan);
+    ssh_channel_free(chan);
+    
+    return exit_status;
+}
+
 
 int open_dir_ssh(ssh_state *state) {
     char *path = "/proc";

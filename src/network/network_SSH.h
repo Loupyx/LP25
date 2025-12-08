@@ -23,7 +23,7 @@ typedef struct {
  *
  * \param serv  Serveur pour lequel établir la session SSH/SFTP.
  * \return Un tableau de pointeurs sur des structures ssh_state initialisées,
- *         ou NULL en cas d'erreur.
+ * ou NULL en cas d'erreur.
  */
 ssh_state *init_ssh_session(server *serv);
 
@@ -50,5 +50,16 @@ int open_dir_ssh(ssh_state *state);
  * \return 0 en cas de succès, 1 si echec à fermer le répertoire
  */
 int close_dir_ssh(ssh_state *state);
+
+/**
+ * Exécute une commande shell simple sur la session SSH distante.
+ *
+ * N'effectue aucune capture de sortie, uniquement la vérification du statut d'exécution.
+ *
+ * \param state   État de session SSH valide.
+ * \param command Chaîne de commande à exécuter (ex: "kill -9 1234").
+ * \return Le code de sortie de la commande distante (0 pour succès), ou -1 en cas d'erreur SSH.
+ */
+int ssh_exec_command(ssh_state *state, const char *command);
 
 #endif

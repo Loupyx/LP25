@@ -1,6 +1,8 @@
 #ifndef KEY_DETECTOR_H
 #define KEY_DETECTOR_H
 #include <sys/types.h>
+#include "./../network/network_SSH.h" 
+#include "./../process/Processus.h" 
 
 /**
  * Représente l'état global du programme pour l'interface ncurses.
@@ -35,9 +37,11 @@ void draw_ui(WINDOW *work, programme_state *state);
 /**
  * Gère les entrées clavier de l'utilisateur et met à jour l'état du programme.
  *
- * \param state État du programme à modifier en fonction des touches pressées.
+ * \param state     État du programme à modifier en fonction des touches pressées.
+ * \param connexion Type de connexion actuelle (LOCAL/SSH) pour l'envoi de signal.
+ * \param serv      Pointeur vers l'état SSH (NULL si LOCAL).
  */
-void handle_input(programme_state *state);
+void handle_input(programme_state *state, enum acces_type connexion, ssh_state *serv);
 
 
 #endif

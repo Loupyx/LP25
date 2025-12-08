@@ -3,8 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <signal.h> // Pour les constantes de signaux (SIGSTOP, SIGKILL, etc.)
+#include <signal.h> 
 #include "./../process/Processus.h"
+#include "./../network/network_SSH.h"
 #include "key_detector.h"
 
 
@@ -39,13 +40,18 @@ void draw_ui(WINDOW *work, programme_state *state){
 }
 
 /*gere les entrees du clavier et met a jour l'etat avec le parametre state (etat actuel du prog a modif)*/
-void handle_input(programme_state *state){
+void handle_input(programme_state *state, enum acces_type connexion, ssh_state *serv){
     int key = getch();
     if (key == ERR){
         return;     //aucune touche pressee
     }
     const char *key_name = NULL;
     pid_t target_pid = state->selected_pid;
+
+    // Détermination si l'action est possible
+    if (target_pid == 0) {
+        // Aucune action de signal n'est possible sans PID sélectionné
+    }
 
     switch (key){       //creation des cas en fonction des touches pressees
         case KEY_F(1):
@@ -62,19 +68,19 @@ void handle_input(programme_state *state){
             break;
         case KEY_F(5):
             key_name = "F5 (pause processus)\n";
-            send_process_action(target_pid, SIGSTOP, "Pause");     
+            send_process_action(target_pid, SIGSTOP, "Pause", connexion, serv);     
             break;
         case KEY_F(6):
             key_name = "F6 (arret processus)\n";
-            send_process_action(target_pid, SIGTERM, "Arret");     
+            send_process_action(target_pid, SIGTERM, "Arret", connexion, serv);     
             break;
         case KEY_F(7):
             key_name = "F7 (tuer/kill le processus )\n";
-            send_process_action(target_pid, SIGKILL, "Kill");  
+            send_process_action(target_pid, SIGKILL, "Kill", connexion, serv);  
             break;
         case KEY_F(8):
             key_name = "F8 (redemarrer/reprendre le processus)\n";
-            send_process_action(target_pid,SIGCONT, "Reprise");     
+            send_process_action(target_pid,SIGCONT, "Reprise", connexion, serv);     
             break;
         case 'q':
             state->is_running =0;   //permet de quitter la boucle 
