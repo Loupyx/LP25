@@ -7,13 +7,13 @@
 /**
  * Représente l'état global du programme pour l'interface ncurses.
  *
- * is_running indique si la boucle principale doit continuer à s'exécuter,
- * last_key_pressed garde en mémoire la dernière touche saisie par l'utilisateur.
+ * est_en_cours indique si la boucle principale doit continuer à s'exécuter,
+ * derniere_touche_pressee garde en mémoire la dernière touche saisie par l'utilisateur.
  */
 typedef struct {
-    int  is_running;              /**< Indique si le programme est en cours d'exécution (booléen). */
-    char last_key_pressed[128];   /**< Dernière touche (ou séquence) pressée par l'utilisateur. */
-    pid_t selected_pid;
+    int  is_running;              /**< Indique si le programme est en cours d'exécution (booléen). (Renommé pour la clarté en 'est_en_cours' dans les commentaires).*/
+    char last_key_pressed[128];   /**< Dernière touche (ou séquence) pressée par l'utilisateur. (Renommé pour la clarté en 'derniere_touche_pressee' dans les commentaires).*/
+    pid_t selected_pid;           /**< PID du processus actuellement sélectionné pour l'envoi de signaux. */
 } programme_state;
 
 /**
@@ -36,6 +36,8 @@ void draw_ui(WINDOW *work, programme_state *state);
 
 /**
  * Gère les entrées clavier de l'utilisateur et met à jour l'état du programme.
+ *
+ * Tente d'envoyer un signal au processus sélectionné si une touche F est pressée.
  *
  * \param state     État du programme à modifier en fonction des touches pressées.
  * \param connexion Type de connexion actuelle (LOCAL/SSH) pour l'envoi de signal.
