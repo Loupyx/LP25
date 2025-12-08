@@ -95,14 +95,15 @@ void print_cpu(proc *p);
 /**
  * Envoie une action à un processus via un signal.
  *
- * Utilise le PID fourni pour envoyer le signal donné au processus ciblé,
- * en associant ce signal à un nom d'action pour la journalisation ou l'affichage.
+ * Gère l'envoi de signaux localement (via kill()) ou à distance (via SSH).
  *
  * \param pid           PID du processus cible.
  * \param action_signal Signal à envoyer (par ex. SIGTERM, SIGKILL, SIGSTOP).
  * \param action_name   Nom symbolique de l'action (par ex. "kill", "stop"), utilisé pour les messages.
- * \return 0 en cas de succès, une valeur non nulle en cas d'erreur (par ex. si le signal n'a pas pu être envoyé).
+ * \param connexion     Type de connexion (LOCAL, SSH, TELNET) pour déterminer la méthode d'envoi.
+ * \param serv          État de la session SSH (uniquement utilisé si connexion est SSH).
+ * \return 0 en cas de succès, une valeur non nulle en cas d'erreur.
  */
-int send_process_action(pid_t pid, int action_signal, const char *action_name);
+int send_process_action(pid_t pid, int action_signal, const char *action_name, enum acces_type connexion, ssh_state *serv);
 
 #endif
