@@ -24,12 +24,9 @@ ssh_state *init_ssh_session(server *serv) {
         return NULL;
     }
 
-    char port_str[6]; 
-    snprintf(port_str, sizeof(port_str), "%d", serv->port);
-
     ssh_options_set(state->session, SSH_OPTIONS_HOST, serv->adresse);
     ssh_options_set(state->session, SSH_OPTIONS_USER, serv->username);
-    ssh_options_set(state->session, SSH_OPTIONS_PORT_STR, port_str);
+    ssh_options_set(state->session, SSH_OPTIONS_PORT, &serv->port);
    
     state->rc = ssh_connect(state->session); //connexion
     if (state->rc != SSH_OK) {
