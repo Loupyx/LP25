@@ -1,20 +1,24 @@
 #include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <getopt.h>
 #include <string.h>
 #include <unistd.h>
-#include <getopt.h>
 #include <sys/stat.h>
-
-#include "ui/key_detector.h"
-#include "network/network_SSH.h"
-#include "process/Processus.h"
-#include "tool/tool.h"
+#include "key_detector.h"
 
 /*fonction main */
 int main(int argc, char *argv[]){
     WINDOW *main_work;
     programme_state state = {.is_running = 1};
+/*
+    //initialisation
+    strcpy(state.last_key_pressed, "aucune");
+    main_work = initialize_ncurses();
+    if (main_work ==NULL){
+        return 1;
+    }
+*/
 
     int opt; // c'est tout ce qu'on met après ./projet, ce qu'on va analyser
     int dry_run = 0;      // va servir à tester l'accès à la liste des process sans les afficher (si c'est 1, on teste sans afficher, si non on affichera )
@@ -39,10 +43,11 @@ int main(int argc, char *argv[]){
         {"username", required_argument, 0, 'u'},
         {"password", required_argument, 0, 'p'},
         {"all", no_argument, 0, 'a'},
-        {0, 0, 0, 0} // stop
+        {0, 0, 0, 0} // stooooooopppppppppppppppppppp
     };
 
-    while ((opt = getopt_long(argc, argv, "hc:t:P:l:s:u:p:a", long_options, NULL)) != -1) {
+    // Boucle qui passe en revue toutes les options passées (dans opt ducoup)
+    while ((opt = getopt_long(argc, argv, "hc:t:P:l:s:u:p:a", long_options, NULL)) != -1) { // quand ya : après l'option, ça veut dire qu'on attend un argument
         switch (opt) {
             case 'h':
                 printf("\nMode d'emploi du programme :\n");
@@ -95,7 +100,7 @@ int main(int argc, char *argv[]){
                 break;
 
             default:
-                fprintf(stderr, "Option inconnue ! Utilise -h ou --help pour voir comment ça fonctionne !!.\n");
+                fprintf(stderr, "Option inconnue ! Utilise -h ou --help pour voir comment ça fonctionne, nananananèreuh !!.\n");
                 exit(1);
         }
     }
@@ -116,72 +121,83 @@ int main(int argc, char *argv[]){
         // Vérifier que le fichier est caché (nom commence par .)
         if (remote_config[0] != '.') {
             fprintf(stderr, "Alerte : le fichier de config '%s' doit être caché (commencer par '.')\n", remote_config);
-            return 1;
         }
         // Vérifier les permissions rw-------
         if ((st.st_mode & 0777) != 0600) {
             fprintf(stderr, "Alerte : le fichier de config '%s' doit avoir les droits rw------- (600)\n", remote_config);
-            return 1;
         }
     } else {
         fprintf(stderr, "Le fichier de config '%s' n'existe pas.\n", remote_config);
-        return 1;
     }
 
-    // Si l'utilisateur a donné un remote_server, on vérifie s'il a fourni username/password
+// Si l'utilisateur a donné un remote_server, on vérifie s'il a fourni username/password
 
-    if (remote_server != NULL) {
-        if (username == NULL) { // Demande à l'utilisateur de saisir le nom d'utilisateur pour cette machine distante
-            printf("Entrez le nom d'utilisateur pour %s : ", remote_server);
-            char buf[128];
-            if (fgets(buf, sizeof(buf), stdin)) {
-                buf[strcspn(buf, "\n")] = 0; // retire le caractère de fin de ligne '\n'
-                username = strdup(buf); // copie la chaîne saisie dans username
-            }
-        }
-
-        if (password == NULL) { // Demande à l'utilisateur de saisir le mot de passe pour cette machine distante
-            printf("Entrez le mot de passe pour %s : ", remote_server);
-            char buf[128];
-            if (fgets(buf, sizeof(buf), stdin)) {
-                buf[strcspn(buf, "\n")] = 0;
-                password = strdup(buf);
-            }
+if (remote_server != NULL) {
+    if (username == NULL) { // Demande à l'utilisateur de saisir le nom d'utilisateur pour cette machine distante
+        printf("Entrez le nom d'utilisateur pour %s : ", remote_server);
+        fflush(stdout); // on force l'affichage du prompt avant la saisie
+        char buf[128];  // on fait un buffer temporaire pour lire ce qu'on écrit
+        if (fgets(buf, sizeof(buf), stdin)) { // lit ce qu'on écrit
+            buf[strcspn(buf, "\n")] = 0; // retire le caractère de fin de ligne '\n'
+            username = strdup(buf); // copie la chaîne saisie dans username
         }
     }
+
+    if (password == NULL) { // Demande à l'utilisateur de saisir le mot de passe pour cette machine distante
+        printf("Entrez le mot de passe pour %s : ", remote_server);
+        fflush(stdout); // on force l'affichage du prompt avant la saisie
+        char buf[128];  // buffer temporaire pour lire le mot de passe
+        if (fgets(buf, sizeof(buf), stdin)) { // lit la saisie utilisateur
+            buf[strcspn(buf, "\n")] = 0;      // retire le caractère de fin de ligne '\n'
+            password = strdup(buf);           // copie la chaîne saisie dans password
+        }
+    }
+}
 
     // Si l'utilisateur a donné login user@server et pas de password
     if (login != NULL && password == NULL) {
         char *at = strchr(login, '@'); // cherche le caractère '@' dans login
-        if (at && username == NULL) {
-            *at = 0; // coupe la chaîne à '@'
-            username = strdup(login); // username = partie avant '@'
-            login = at + 1;        // login = partie après '@'
-        }
-        printf("Entrez le mot de passe pour %s@%s : ", username, login);
-        char buf[128];
-        if (fgets(buf, sizeof(buf), stdin)) {
-            buf[strcspn(buf, "\n")] = 0; // supprime le retour à la ligne
-            password = strdup(buf); // stocke le mot de passe
-        }
-    }
+		if (at && username == NULL) {
+			*at = 0; // coupe la chaîne à '@'
+			username = strdup(login); // username = partie avant '@'
+			login = at + 1;        // login = partie après '@'
+		}
+		printf("Entrez le mot de passe pour %s@%s : ", username, login);
+		fflush(stdout);
+		char buf[128];
+		if (fgets(buf, sizeof(buf), stdin)) {
+			buf[strcspn(buf, "\n")] = 0; // supprime le retour à la ligne
+			password = strdup(buf); // stocke le mot de passe
+		}
+	}
+/* si besoin pour vérifier ce qui est donné en paramètre
+    // Affichage des valeurs pour vérifier ce qui a été passé
+    printf("\n===== Résumé des options =====\n");
+    printf("dry_run       : %s\n", dry_run ? "oui" : "non");
+    if (remote_config) printf("remote_config : %s\n", remote_config);
+    if (connexion_type) printf("connexion_type: %s\n", connexion_type);
+    if (port != -1) printf("port          : %d\n", port);
+    if (login) printf("login         : %s\n", login);
+    if (remote_server) printf("remote_server : %s\n", remote_server);
+    if (username) printf("username      : %s\n", username);
+    if (password) printf("password      : %s\n", password);
+    printf("all           : %s\n", all ? "oui" : "non");
+    printf("===============================\n");
 
-    /*
+*/
 
-    //initialisation
-    strcpy(state.last_key_pressed, "aucune");
-    main_work = initialize_ncurses();
-    if (main_work ==NULL){
-        return 1;
-    }
+
+/*
 
     //boucle principale 
-    while (state.is_running) {
+    while (state.is_running){
         handle_input(&state);   //lit et traite l'entrée 
         draw_ui(main_work, &state);     //dessine l'inteface 
         usleep(50000);      //50 millisecondes pour limiter l'utilisation du CPU
     }
+    //nettoyage et restauration du terminal 
     endwin();
-    printf("test clavier termine\n");*/
+    printf("test clavier termine\n");
+    */
     return 0;
 }
