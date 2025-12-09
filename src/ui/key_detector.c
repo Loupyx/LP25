@@ -70,68 +70,91 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
     wrefresh(work);     //rafraichit la page 
 }
 
+/*dessine le contenu du panneau d'aide*/
+void draw_help(WINDOW *work, int max_y, int max_x) {
+    mvprintw(2, 5, "--- Aide : Raccourcis Clavier ---");
+    //contenu de l'aide
+    mvprintw(4, 5, "[F1] : Afficher de l'aide / caccher l'aide");
+    mvprintw(5, 5, "[F2] : Onglet suivant (navigaion)");
+    mvprintw(6, 5, "[F3] : Onglet précédent (navigaion)");
+    mvprintw(7, 5, "[F4] : Recherche / Filetrage des processus");
+    mvprintw(9, 5, "[F5] : Mettre en Pause le processus sélectionné (SIGSTOP)");
+    mvprintw(10, 5, "[F6] : Arreter le processus sélectionné (SIGTERM)");
+    mvprintw(11, 5, "[F7] : Tuer (Kill) le processus sélectionné (SIGKILL)");
+    mvprintw(12, 5, "[F8] : Reprendre le processus sélectionné (SIGCONT)");
+    mvprintw(13, 5, "[q] : Quitter l'application");
+    //message indiquer en bas 
+    mvprintw(max_y -2, (max_x /2 ) - 25, "Appuyer sur F1 ou Q pour revenir à la liste des processus");
+
+}
 /*gere les entrees du clavier et met a jour l'etat avec le parametre state (etat actuel du prog a modif)*/
 void handle_input(programme_state *state, int key){
     const char *key_name = NULL;
     pid_t target_pid = state->selected_pid;
     int erreur;
 
-    switch (key){       //creation des cas en fonction des touches pressees
+    switch (key){
         case KEY_F(1):
-            key_name = "F1 (aide)\n";
+            state->is_help_displayed =! state->is_help_displayed;
+            key_name = "F1 (aide)";
             break;
-        case KEY_F(2):
-            key_name = "F2 (onglet suivant)\n";
-            break;
-        case KEY_F(3):
-            key_name = "F3 (onglet precedent)\n";
-            break;
-        case KEY_F(4):
-            key_name = "F4 (recherche)\n";
-            break;
-        case KEY_F(5):
-            key_name = "F5 (pause processus)\n";
-            erreur = send_process_action(target_pid, SIGSTOP, "Pause");     
-            break;
-        case KEY_F(6):
-            key_name = "F6 (arret processus)\n";
-            erreur = send_process_action(target_pid, SIGTERM, "Arret");     
-            break;
-        case KEY_F(7):
-            key_name = "F7 (tuer/kill le processus )\n";
-            erreur = send_process_action(target_pid, SIGKILL, "Kill");  
-            break;
-        case KEY_F(8):
-            key_name = "F8 (redemarrer/reprendre le processus)\n";
-            erreur = send_process_action(target_pid,SIGCONT, "Reprise");     
-            break;
+
         case 'q':
-            state->is_running =0;   //permet de quitter la boucle 
-            key_name = "'q' (quitter)";
+            if (state->is_help_displayed) {
+                // Si on est dans l'aide, 'q' ferme l'aide
+                state->is_help_displayed = 0;
+                key_name = "'q' (ferme l'aide)";
+            } else {
+                // Sinon, 'q' quitte l'application
+                state->is_running = 0;
+                key_name = "'q' (quitter)";
+            }
             break;
-        case KEY_RESIZE:        //permet le redimmensionnement du terminal
-            key_name = "terminal redimensionne (KEY_RESIZE)\n";
-            break;
-        case 258:
-            key_name = "Flèche/pavier bas";
-            break;
-        case 259:
-            key_name = "Flèche/pavier haut";
-            break;
-        default: //pour toutes les autres touches on affiche le code numérique
-            snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "autre touche : code = %d", key);
-            return; //on affiche le code 
+
+        default: 
+            // Si l'aide est affichée, ignorer toutes les autres touches (F2-F8, etc.)
+            if (state->is_help_displayed) {
+                 return;
+            }
+            
+            // Traitement des autres touches si l'aide n'est PAS affichée
+            switch (key) {
+                case KEY_F(2):
+                    key_name = "F2 (onglet suivant)";
+                    break;
+                case KEY_F(3):
+                    key_name = "F3 (onglet precedent)";
+                    break;
+                case KEY_F(4):
+                    key_name = "F4 (recherche)";
+                    break;
+                case KEY_F(5):
+                    key_name = "F5 (pause processus)";
+                    send_process_action(target_pid, SIGSTOP, "Pause");     
+                    break;
+                case KEY_F(6):
+                    key_name = "F6 (arret processus)";
+                    send_process_action(target_pid, SIGTERM, "Arret");     
+                    break;
+                case KEY_F(7):
+                    key_name = "F7 (tuer/kill le processus)";
+                    send_process_action(target_pid, SIGKILL, "Kill");  
+                    break;
+                case KEY_F(8):
+                    key_name = "F8 (redemarrer/reprendre le processus)";
+                    send_process_action(target_pid,SIGCONT, "Reprise");     
+                    break;
+                case KEY_RESIZE:        //permet le redimmensionnement du terminal
+                    key_name = "terminal redimensionne (KEY_RESIZE)";
+                    break;
+                default:
+                    // Pour toutes les autres touches
+                    snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "autre touche : code = %d", key);
+                    return; // on affiche le code
+            }
     }
 
-    if (erreur == -1){
-        mvprintw(max_y - 2, 0, "Erreur envoie signal à %d pour %s", target_pid, key_name);
-    }
-
-    if (erreur == 0){
-        mvprintw(max_y - 2, 0, "Envoie signal à %d pour %s réussi", target_pid, key_name);
-    }
-
-    /*met a jour l'etat du programme avec le nom de la touche*/
+    /*met a jour l'etat du programme avec le nom de la touche (pour l'affichage)*/
     if  (key_name){
         strncpy(state->last_key_pressed, key_name,sizeof(state->last_key_pressed) - 1);
         state->last_key_pressed[sizeof(state->last_key_pressed) - 1] = '\0';
