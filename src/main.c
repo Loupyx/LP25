@@ -166,12 +166,15 @@ int main(int argc, char *argv[]){
         }
     }
 
-    /*
+    //initialisation de l'état ncurses
+    // Initialisation correcte de tous les champs de programme_state
+        state.is_running = 1, 
+        state.selected_pid = 0, // Initialisation par défaut
+        state.is_help_displayed = 0; // l'aide n'est pas affichée au demmarrage 
 
-    //initialisation
-    strcpy(state.last_key_pressed, "aucune");
+    strcpy(state.last_key_pressed, "aucune"); // Initialisation du texte
     main_work = initialize_ncurses();
-    if (main_work ==NULL){
+    if (main_work == NULL){
         return 1;
     }
 
@@ -181,7 +184,8 @@ int main(int argc, char *argv[]){
         draw_ui(main_work, &state);     //dessine l'inteface 
         usleep(50000);      //50 millisecondes pour limiter l'utilisation du CPU
     }
+    //nettoyage
     endwin();
-    printf("test clavier termine\n");*/
+    printf("test clavier termine\n");
     return 0;
 }

@@ -39,7 +39,7 @@ proc *add_queue_proc(proc *list, proc *p) {
 
 void print_proc(proc *p) {
     fprintf(stderr,
-        "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\nupdate : %d\n",
+        "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\nupdate : %ld\n",
         p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU,p->vsize, p->time, p->update_time);
 
 }
@@ -283,7 +283,7 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
 
         if (find == 0) {
             char pid[32];
-            snprintf(pid, sizeof(pid), "%d", list_dir[i]);
+            snprintf(pid, sizeof(pid), "%s", list_dir[i]);
             proc *new = get_info(pid, state, connexion);
             *lproc = add_queue_proc(*lproc, new);
         }
