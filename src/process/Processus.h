@@ -1,6 +1,7 @@
 #ifndef PROCESSUS_H
 #define PROCESSUS_H
 #include <sys/types.h>
+#include <time.h>
 
 #include "./../network/network_SSH.h"
 
@@ -29,6 +30,7 @@ typedef struct proc_{
     double CPU;          /**< Pourcentage ou part d'utilisation CPU. */
     double time;         /**< Temps CPU consommé ou temps d'exécution. */
     long vsize;          /**< Taille mémoire utilisé.  */
+    time_t update_time;  /**< Temps de la dernière mise à jour du processus */
     struct proc_ *next;  /**< Pointeur vers le processus suivant dans la liste. */
     struct proc_ *prev;  /**< Pointeur vers le processus précédent dans la liste. */
 } proc;
