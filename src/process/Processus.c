@@ -39,8 +39,8 @@ proc *add_queue_proc(proc *list, proc *p) {
 
 void print_proc(proc *p) {
     fprintf(stderr,
-        "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\n",
-        p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU,p->vsize, p->time);
+        "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\nupdate : %d\n",
+        p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU,p->vsize, p->time, p->update_time);
 
 }
 
@@ -109,8 +109,9 @@ char *get_char(char *pid, char *file, enum acces_type connexion, ssh_state *stat
 
 int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state){
     char *unformated, **data;
-    long utime, stime, ticks_per_sec = sysconf(_SC_CLK_TCK), time, nstime, nutime, ntime, dtick;
+    long utime, stime, ticks_per_sec = sysconf(_SC_CLK_TCK), ttime, pstime, putime, ptime, dtick;
     double sec, cpu;
+    time_t dt, n_update_time;
 
     unformated = get_char(pid, "stat", connexion, state);
     if(!unformated){
@@ -123,34 +124,21 @@ int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state){
     }
     utime = atol(data[14]);
     stime = atol(data[15]);
-    time = utime+stime;
+    n_update_time = time(NULL);
+    dt = n_update_time - p->update_time; //delta du temps en s
+    ttime = utime+stime;
     ticks_per_sec = sysconf(_SC_CLK_TCK);
-    sec = (double)time/(double)ticks_per_sec;
+    sec = (double)ttime/(double)ticks_per_sec;
+    ptime = p->time;
     p->time = sec;
     destoy_char(data);
 
-    //sleep
-    struct timespec ts;
-    ts.tv_sec  = (time_t)DT;
-    ts.tv_nsec = (long)((DT - ts.tv_sec) * 1e9);
-    //endsleep
-    nanosleep(&ts, NULL);  // POSIX
-    unformated = get_char(pid, "stat", connexion, state);
-    if(!unformated){
-        return 1;
-    }
-    data = split(unformated, ' ');
-    free(unformated);
-    if(!data || !data[0]){
-        return 1;
-    }
-    nutime = atol(data[14]);
-    nstime = atol(data[15]);
-    ntime = nutime + nstime;
-    dtick = ntime - time;
-    cpu = (double)dtick/(double)(DT*ticks_per_sec);
+    ptime = p->time;
+
+    dtick = ttime - ptime*(double)ticks_per_sec;
+    cpu = (double)dtick/(double)(dt*ticks_per_sec);
     p->CPU = cpu*100;
-    destoy_char(data);
+    p->update_time = n_update_time;
 
     return 0;
 }
@@ -210,6 +198,8 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
         strncpy(new->user, pw->pw_name, 30);
     }
 
+    new->update_time = time(NULL);
+
     return new;
 }
 
@@ -234,6 +224,7 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
 
     while (list_dir[i]) {
         proc *new = get_info(list_dir[i], state, connexion);
+        new->CPU = 0;
         list = add_queue_proc(list, new);
         ++i;
     }
@@ -243,13 +234,8 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
 
 int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acces_type connexion) {
     proc *temp = *lproc;
-
-    fprintf(stderr, "cheking former proc\n");
-
     while (temp) {
-        print_proc(temp);
         int find = 0;
-
         for (int i = 0; list_dir[i]; i++) {
             char pid[32];
             snprintf(pid, sizeof(pid), "%d", temp->PID);
@@ -283,20 +269,23 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
             temp = temp->next;
         }
     }
-
-    fprintf(stderr, "cheking new proc\n");
     for (int i = 0; list_dir[i]; i++) {
+        int find = 0;
         temp = *lproc;
-        fprintf(stderr, "cheking new proc n°%s\n", list_dir[i]);
         while (temp){
             char pid[32];
             snprintf(pid, sizeof(pid), "%d", temp->PID);
             if (strcmp(list_dir[i], pid) == 0) {
-                proc *new = get_info(pid, state, connexion);
-                *lproc = add_queue_proc(*lproc, new);
-                break;
+                find = 1;
             }
             temp=temp->next;
+        }
+
+        if (find == 0) {
+            char pid[32];
+            snprintf(pid, sizeof(pid), "%d", list_dir[i]);
+            proc *new = get_info(pid, state, connexion);
+            *lproc = add_queue_proc(*lproc, new);
         }
     }
 
