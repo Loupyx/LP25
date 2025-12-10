@@ -14,7 +14,8 @@
 /*fonction main */
 int main(int argc, char *argv[]){
     WINDOW *main_work;
-    programme_state state = {.is_running = 1};
+    programme_state state = {
+        .is_running = 1, .selected_pid = 0, .is_help_displayed = 0, .is_search_active = 0, .search_term = ""};
 
     int opt; // c'est tout ce qu'on met après ./projet, ce qu'on va analyser
     int dry_run = 0;      // va servir à tester l'accès à la liste des process sans les afficher (si c'est 1, on teste sans afficher, si non on affichera )
@@ -166,11 +167,6 @@ int main(int argc, char *argv[]){
         }
     }
 
-    //initialisation de l'état ncurses
-    // Initialisation correcte de tous les champs de programme_state
-        state.is_running = 1, 
-        state.selected_pid = 0, // Initialisation par défaut
-        state.is_help_displayed = 0; // l'aide n'est pas affichée au demmarrage 
 
     strcpy(state.last_key_pressed, "aucune"); // Initialisation du texte
     main_work = initialize_ncurses();

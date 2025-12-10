@@ -1,6 +1,7 @@
 #include <ncurses.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h> // Pour les constantes de signaux (SIGSTOP, SIGKILL, etc.)
@@ -29,7 +30,7 @@ WINDOW *initialize_ncurses(){
 void draw_help(WINDOW *work, int max_y, int max_x) {
     mvprintw(2, 5, "--- Aide : Raccourcis Clavier ---");
     //contenu de l'aide
-    mvprintw(4, 5, "[F1] : Afficher de l'aide / caccher l'aide");
+    mvprintw(4, 5, "[F1] : Afficher de l'aide / cacher l'aide");
     mvprintw(5, 5, "[F2] : Onglet suivant (navigaion)");
     mvprintw(6, 5, "[F3] : Onglet précédent (navigaion)");
     mvprintw(7, 5, "[F4] : Recherche / Filetrage des processus");
@@ -50,7 +51,13 @@ void draw_ui(WINDOW *work, programme_state *state) {
     if (state->is_help_displayed) {
         //affiche le panneau d'aide 
         draw_help(work, max_y, max_x);
-    } else {
+    } else if (state->is_search_active) {
+        mvprintw(2, 0, "Mode recherche activé (F4 ou entrée pour quitter la fenetre)");
+        mvprintw(4, 0, "Rechercher avec le nom ou le PID : %s", state->search_term);
+        //on place le curseur à la fin du terme recherché 
+        move(4, strlen("Rechercher avec le nom ou le PID :") + strlen(state->search_term));
+    }
+    else {
         //affiche l'interface noraml 
         mvprintw(2, 0, "appuyer sur une touche F (F1 à F8) ou q pour quitter ");
         mvprintw(4, 0, "voici la derniere touche detectee : %s", state->last_key_pressed);
@@ -92,18 +99,45 @@ void handle_input(programme_state *state){
             if (state->is_help_displayed) {
                  return;
             }
+            if (state->is_search_active) {
+                int len = strlen(state->search_term);
+                if (key == '\n' || key == KEY_ENTER || key == KEY_F(4)) {
+                    //sortie du mode recherche
+                    state->is_search_active = 0;
+                    key_name = "Fin de recherche (ENTREE/F4)";
+                    //C'EST ICI QU'ON VA LANCER LE FILTRAGE DES PROCESSUS EN UTILISANT LA CHAINE STOCKEE DANS STATE-<SEARCH_TERM
+                } else if (key == KEY_BACKSPACE || key == 127) {    //127 correspond au code clavier 
+                    //supp du dernier caractere 
+                    if (len > 0 ) {
+                        state->search_term[len - 1] = '\0';
+                    }
+                    key_name = "Saisie : BACKSPACE";
+                } else if (isprint(key) && len < sizeof(state->search_term) - 1) {
+                    state->search_term[len] = (char)key;
+                    state->search_term[len + 1] = '\0';
+                    key_name = "Saisie : Caractere";
+                }
+                if (key_name) {
+                    strncpy(state->last_key_pressed, key_name, sizeof(state->last_key_pressed) - 1);
+                    state->last_key_pressed[sizeof(state->last_key_pressed) - 1] = '\0';
+                }
+                return;
+            }
             
             // Traitement des autres touches si l'aide n'est PAS affichée
             switch (key) {
+                case KEY_F(4):
+                    state->is_search_active =1;
+                    key_name = "F4 (Recherche)";
+                    state->search_term[0] = '\0';
+                    break;
                 case KEY_F(2):
                     key_name = "F2 (onglet suivant)";
                     break;
                 case KEY_F(3):
                     key_name = "F3 (onglet precedent)";
                     break;
-                case KEY_F(4):
-                    key_name = "F4 (recherche)";
-                    break;
+                
                 case KEY_F(5):
                     key_name = "F5 (pause processus)";
                     send_process_action(target_pid, SIGSTOP, "Pause");     
