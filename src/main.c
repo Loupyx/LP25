@@ -186,6 +186,6 @@ int main(int argc, char *argv[]){
     }
     //nettoyage
     endwin();
-    printf("test clavier termine\n");
+    printf("App fermer\n");
     return 0;
 }

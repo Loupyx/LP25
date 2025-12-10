@@ -36,7 +36,7 @@ void draw_help(WINDOW *work, int max_y, int max_x) {
     mvprintw(9, 5, "[F5] : Mettre en Pause le processus sélectionné (SIGSTOP)");
     mvprintw(10, 5, "[F6] : Arreter le processus sélectionné (SIGTERM)");
     mvprintw(11, 5, "[F7] : Tuer (Kill) le processus sélectionné (SIGKILL)");
-    mvprintw(12, 5, "[F8] : Reprendre le processus sélectionné (SIGCONT");
+    mvprintw(12, 5, "[F8] : Reprendre le processus sélectionné (SIGCONT)");
     mvprintw(13, 5, "[q] : Quitter l'application");
     //message indiquer en bas 
     mvprintw(max_y -2, (max_x /2 ) - 25, "Appuyer sur F1 ou Q pour revenir à la liste des processus");
