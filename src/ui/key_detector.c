@@ -1,6 +1,7 @@
 #include <ncurses.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h> // Pour les constantes de signaux (SIGSTOP, SIGKILL, etc.)
@@ -37,44 +38,58 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
         tmp = tmp->next;
     }
     werase(work); //permet d'effacer la fenetre d'avant utile pour afficher dynamiquement les processus 
-    mvprintw(0, 0, "--- testeur de raccourcis clavier F-keys (ncurses)---\n");
-    mvprintw(2, 0, "appuyer sur une touche F (F1 à F8) ou q pour quitter\n");
-    mvprintw(4, 0, "voici la derniere touche detectee : %s", state->last_key_pressed);
-    mvprintw(max_y - 1, 0, "[F1-F8] detectee | [q] quitter");
-    mvwprintw(work, 5, 0, "Nombre processus : %d ", total_proc);
-    mvwprintw(work, 6, 0, "PID\tPPID\tUSER\t\t\t\tCPU\tSTATE\tCMD");
 
-    proc *temp_aff = selected_proc;
-    for (int i=0; temp_aff && i+7<window_size; i++) {
-        if (i == 0) {
-            wattron(work, A_REVERSE);    // surligne la ligne du selected_proc
-        }
-        mvwprintw(work, i+7, 0,
-                "%-6d\t%-6d\t%-25s\t%-5.1f\t%c\t%.40s  ",
-                temp_aff->PID,
-                temp_aff->PPID,
-                temp_aff->user ? temp_aff->user : "?",
-                temp_aff->CPU,
-                temp_aff->state,
-                temp_aff->cmdline ? temp_aff->cmdline : "?"); 
-        if (i == 0) {
-            wattroff(work, A_REVERSE);    // surligne la ligne du selected_proc
-            state->selected_pid = temp_aff->PID;
-        }
-        if (temp_aff->next != NULL) {
-            temp_aff = temp_aff->next;
-        } else {
-            break;
-        }  
+    mvprintw(0, 0, "--- HTOP MAISON LP25 ---");
+    if (state->is_help_displayed) {
+        //affiche le panneau d'aide 
+        draw_help(work, max_y, max_x);
+    } else if (state->is_search_active) {
+        mvprintw(2, 0, "Mode recherche activé (F4 ou entrée pour quitter la fenetre)");
+        mvprintw(4, 0, "Rechercher avec le nom ou le PID : %s", state->search_term);
+        //on place le curseur à la fin du terme recherché 
+        move(4, strlen("Rechercher avec le nom ou le PID :") + strlen(state->search_term));
     }
-    wrefresh(work);     //rafraichit la page 
+    else {
+        //affiche l'interface noraml 
+        mvprintw(2, 0, "appuyer sur une touche F (F1 à F8) ou q pour quitter ");
+        mvprintw(4, 0, "voici la derniere touche detectee : %s", state->last_key_pressed);
+        mvwprintw(work, 5, 0, "Nombre processus : %d ", total_proc);
+        mvwprintw(work, 6, 0, "PID\tPPID\tUSER\t\t\t\tCPU\tSTATE\tCMD");
+
+        proc *temp_aff = selected_proc;
+        for (int i=0; temp_aff && i+7<window_size; i++) {
+            if (i == 0) {
+                wattron(work, A_REVERSE);    // surligne la ligne du selected_proc
+            }
+            mvwprintw(work, i+7, 0,
+                    "%-6d\t%-6d\t%-25s\t%-5.1f\t%c\t%.40s  ",
+                    temp_aff->PID,
+                    temp_aff->PPID,
+                    temp_aff->user ? temp_aff->user : "?",
+                    temp_aff->CPU,
+                    temp_aff->state,
+                    temp_aff->cmdline ? temp_aff->cmdline : "?"); 
+            if (i == 0) {
+                wattroff(work, A_REVERSE);    // surligne la ligne du selected_proc
+                state->selected_pid = temp_aff->PID;
+            }
+            if (temp_aff->next != NULL) {
+                temp_aff = temp_aff->next;
+            } else {
+                break;
+            }  
+    }
+    }
+    // affichage commun des raccourcis (commun à l'interface help et normale)
+    mvprintw(max_y - 1, 0, "[F1] aide | [F2/F3] onglets | [F4] recherche | [F5-F8] actions processus | q quitter ");
+    wrefresh(work);
 }
 
 /*dessine le contenu du panneau d'aide*/
 void draw_help(WINDOW *work, int max_y, int max_x) {
     mvprintw(2, 5, "--- Aide : Raccourcis Clavier ---");
     //contenu de l'aide
-    mvprintw(4, 5, "[F1] : Afficher de l'aide / caccher l'aide");
+    mvprintw(4, 5, "[F1] : Afficher de l'aide / cacher l'aide");
     mvprintw(5, 5, "[F2] : Onglet suivant (navigaion)");
     mvprintw(6, 5, "[F3] : Onglet précédent (navigaion)");
     mvprintw(7, 5, "[F4] : Recherche / Filetrage des processus");
@@ -85,8 +100,8 @@ void draw_help(WINDOW *work, int max_y, int max_x) {
     mvprintw(13, 5, "[q] : Quitter l'application");
     //message indiquer en bas 
     mvprintw(max_y -2, (max_x /2 ) - 25, "Appuyer sur F1 ou Q pour revenir à la liste des processus");
-
 }
+
 /*gere les entrees du clavier et met a jour l'etat avec le parametre state (etat actuel du prog a modif)*/
 void handle_input(programme_state *state, int key){
     const char *key_name = NULL;
@@ -116,18 +131,45 @@ void handle_input(programme_state *state, int key){
             if (state->is_help_displayed) {
                  return;
             }
+            if (state->is_search_active) {
+                int len = strlen(state->search_term);
+                if (key == '\n' || key == KEY_ENTER || key == KEY_F(4)) {
+                    //sortie du mode recherche
+                    state->is_search_active = 0;
+                    key_name = "Fin de recherche (ENTREE/F4)";
+                    //C'EST ICI QU'ON VA LANCER LE FILTRAGE DES PROCESSUS EN UTILISANT LA CHAINE STOCKEE DANS STATE-<SEARCH_TERM
+                } else if (key == KEY_BACKSPACE || key == 127) {    //127 correspond au code clavier 
+                    //supp du dernier caractere 
+                    if (len > 0 ) {
+                        state->search_term[len - 1] = '\0';
+                    }
+                    key_name = "Saisie : BACKSPACE";
+                } else if (isprint(key) && (len < sizeof(state->search_term) - 1)) {
+                    state->search_term[len] = (char)key;
+                    state->search_term[len + 1] = '\0';
+                    key_name = "Saisie : Caractere";
+                }
+                if (key_name) {
+                    strncpy(state->last_key_pressed, key_name, sizeof(state->last_key_pressed) - 1);
+                    state->last_key_pressed[sizeof(state->last_key_pressed) - 1] = '\0';
+                }
+                return;
+            }
             
             // Traitement des autres touches si l'aide n'est PAS affichée
             switch (key) {
+                case KEY_F(4):
+                    state->is_search_active =1;
+                    key_name = "F4 (Recherche)";
+                    state->search_term[0] = '\0';
+                    break;
                 case KEY_F(2):
                     key_name = "F2 (onglet suivant)";
                     break;
                 case KEY_F(3):
                     key_name = "F3 (onglet precedent)";
                     break;
-                case KEY_F(4):
-                    key_name = "F4 (recherche)";
-                    break;
+                
                 case KEY_F(5):
                     key_name = "F5 (pause processus)";
                     send_process_action(target_pid, SIGSTOP, "Pause");     

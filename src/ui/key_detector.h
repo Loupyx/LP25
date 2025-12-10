@@ -14,6 +14,8 @@ typedef struct {
     char last_key_pressed[128];   /** Dernière touche (ou séquence) pressée par l'utilisateur. */
     pid_t selected_pid;           /**doonne le PID selectionné */
     int is_help_displayed;      /**Indicateur pour afficher le panneau d'aide (1=Oui, 0=Non)*/
+    int is_search_active;       /**indique si le mode recherche est actif (1=oui et 0=non) */
+    char search_term[128];      /** terme de recherche saisie par l'utilisateur*/ 
 } programme_state;
 
 /**
