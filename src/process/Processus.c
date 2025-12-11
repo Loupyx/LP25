@@ -39,7 +39,7 @@ proc *add_queue_proc(proc *list, proc *p) {
 
 void print_proc(proc *p) {
     fprintf(stderr,
-        "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\nupdate : %d\n",
+        "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\nupdate : %ld\n",
         p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU,p->vsize, p->time, p->update_time);
 
 }
@@ -109,7 +109,7 @@ char *get_char(char *pid, char *file, enum acces_type connexion, ssh_state *stat
 
 int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state){
     char *unformated, **data;
-    long utime, stime, ticks_per_sec = sysconf(_SC_CLK_TCK), ttime, pstime, putime, ptime, dtick;
+    long utime, stime, ticks_per_sec = sysconf(_SC_CLK_TCK), ttime, ptime, dtick;
     double sec, cpu;
     time_t dt, n_update_time;
 
@@ -172,6 +172,11 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
     destoy_char(data);
     int error = get_time(pid, new, connexion, state);
 
+    if(error == 1){
+        fprintf(stderr, "erreur get_time for %d", new->PID);
+        return NULL;
+    }
+
     unformated = get_char(pid, "status", connexion, state);
     if (!unformated) {
         fprintf(stderr, "return NULL to unformated for : %s\n", pid);
@@ -206,14 +211,14 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
 //implémentation de l'envoi du signal au processus
 int send_process_action(pid_t pid, int action_signal, const char *action_name) {
     if (pid <= 1) {
-        fprintf(stderr, "erreur action : PID invalide (%d)\n", pid);
+        //fprintf(stderr, "erreur action : PID invalide (%d)\n", pid);
         return -1;
     }
     if (kill(pid, action_signal) == 0) {
-        fprintf(stderr, "Succes : action '%s' envoyée au PID %d\n", action_name, pid );
+        //fprintf(stderr, "Succes : action '%s' envoyée au PID %d\n", action_name, pid );
         return 0;
     } else {
-        fprintf(stderr, "erreur lors de l'envoie du signal %s au PID %d: %s\n",action_name, pid, strerror(errno));
+        //fprintf(stderr, "erreur lors de l'envoie du signal %s au PID %d: %s\n",action_name, pid, strerror(errno));
         return -1;
     }
 }
@@ -282,8 +287,7 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
         }
 
         if (find == 0) {
-            char pid[32];
-            snprintf(pid, sizeof(pid), "%d", list_dir[i]);
+            char *pid =  list_dir[i];
             proc *new = get_info(pid, state, connexion);
             *lproc = add_queue_proc(*lproc, new);
         }
