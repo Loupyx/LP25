@@ -21,6 +21,7 @@ char *login = NULL;            // login, genre win
 char *remote_server = NULL;    // nom DNS ou IP de la machine distante
 char *username = NULL;          // nom d'utilisateur pour la connexion à distance
 char *password = NULL;          // mot de passe pour la connexion à distance
+int max_y, max_x;   //taille fenetre 
 
 // On définit les options longues, que -h = --help
 struct option long_options[] = {
@@ -209,10 +210,12 @@ int main(int argc, char *argv[]){
 
     while (state.is_running) {
         // on compte le nb total de processus
+        getmaxyx(main_work, max_y, max_x);
+        window_size = max_y - 2;
         int total_proc = 0;
         proc *tmp = lproc;
         while (tmp != NULL) {
-            total_proc++;
+            ++total_proc;
             tmp = tmp->next;
         }
 
@@ -228,7 +231,7 @@ int main(int argc, char *argv[]){
         }
 
         // flèche haut
-        if (strstr(lkp, "259") != NULL){ //fleche haut
+        if (strstr(lkp, "Flèche/pavier haut") != NULL){ //fleche haut
             if (selected_proc->prev != NULL) {
                 selected_proc = selected_proc->prev;
             }
@@ -236,7 +239,7 @@ int main(int argc, char *argv[]){
         }
 
         // flèche bas
-        else if (strstr(lkp, "258") != NULL) { //fleche bas
+        else if (strstr(lkp, "Flèche/pavier bas") != NULL) { //fleche bas
             if (selected_proc->next != NULL) {
                 selected_proc = selected_proc->next;
             }
@@ -247,7 +250,7 @@ int main(int argc, char *argv[]){
         mvwprintw(main_work, 6, 0, "PID\tPPID\tUSER\t\t\t\tCPU\tSTATE\tCMD");
 
         proc *temp_aff = selected_proc;
-        for (int i=0; temp_aff && i<window_size; i++) {
+        for (int i=0; temp_aff && i+7<window_size; i++) {
             if (i == 0) {
                 wattron(main_work, A_REVERSE);    // surligne la ligne du selected_proc
             }

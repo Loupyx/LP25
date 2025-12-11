@@ -211,14 +211,14 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
 //implémentation de l'envoi du signal au processus
 int send_process_action(pid_t pid, int action_signal, const char *action_name) {
     if (pid <= 1) {
-        fprintf(stderr, "erreur action : PID invalide (%d)\n", pid);
+        //fprintf(stderr, "erreur action : PID invalide (%d)\n", pid);
         return -1;
     }
     if (kill(pid, action_signal) == 0) {
-        fprintf(stderr, "Succes : action '%s' envoyée au PID %d\n", action_name, pid );
+        //fprintf(stderr, "Succes : action '%s' envoyée au PID %d\n", action_name, pid );
         return 0;
     } else {
-        fprintf(stderr, "erreur lors de l'envoie du signal %s au PID %d: %s\n",action_name, pid, strerror(errno));
+        //fprintf(stderr, "erreur lors de l'envoie du signal %s au PID %d: %s\n",action_name, pid, strerror(errno));
         return -1;
     }
 }
