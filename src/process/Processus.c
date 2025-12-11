@@ -39,7 +39,7 @@ proc *add_queue_proc(proc *list, proc *p) {
 
 void print_proc(proc *p) {
     fprintf(stderr,
-        "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\nupdate : %d\n",
+        "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\nupdate : %ld\n",
         p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU,p->vsize, p->time, p->update_time);
 
 }
@@ -109,7 +109,7 @@ char *get_char(char *pid, char *file, enum acces_type connexion, ssh_state *stat
 
 int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state){
     char *unformated, **data;
-    long utime, stime, ticks_per_sec = sysconf(_SC_CLK_TCK), ttime, pstime, putime, ptime, dtick;
+    long utime, stime, ticks_per_sec = sysconf(_SC_CLK_TCK), ttime, ptime, dtick;
     double sec, cpu;
     time_t dt, n_update_time;
 
@@ -171,6 +171,11 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
     new->vsize = atol(data[22])/8000;
     destoy_char(data);
     int error = get_time(pid, new, connexion, state);
+
+    if(error == 1){
+        fprintf(stderr, "erreur get_time for %d", new->PID);
+        return NULL;
+    }
 
     unformated = get_char(pid, "status", connexion, state);
     if (!unformated) {
@@ -282,8 +287,7 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
         }
 
         if (find == 0) {
-            char pid[32];
-            snprintf(pid, sizeof(pid), "%d", list_dir[i]);
+            char *pid =  list_dir[i];
             proc *new = get_info(pid, state, connexion);
             *lproc = add_queue_proc(*lproc, new);
         }
