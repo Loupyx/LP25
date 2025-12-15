@@ -7,6 +7,7 @@
 #include "./../process/Processus.h"
 #include "key_detector.h"
 
+extern int max_y, max_x; 
 
 /*initilisation de ncurses
 WINDOW* est un pointeur vers la fenetre principale (stdscr)*/
@@ -27,14 +28,11 @@ WINDOW *initialize_ncurses(){
 
 /*creation de l'interface avec comme parametre work (fonction ncurses) et programm_state (etat du programme)*/
 void draw_ui(WINDOW *work, programme_state *state){
-    int max_y, max_x;   //taille fenetre 
-    getmaxyx(work, max_y, max_x);
     werase(work); //permet d'effacer la fenetre d'avant utile pour afficher dynamiquement les processus 
     mvprintw(0, 0, "--- testeur de raccourcis clavier F-keys (ncurses)---\n");
     mvprintw(2, 0, "appuyer sur une touche F (F1 à F8) ou q pour quitter\n");
     mvprintw(4, 0, "voici la derniere touche detectee : %s", state->last_key_pressed);
-    //affichage des raccourcis 
-    mvprintw(max_y - 1, 0, "[F1-F8] detctee | [q] quitter");
+    mvprintw(max_y - 1, 0, "[F1-F8] detectee | [q] quitter");
     wrefresh(work);     //rafraichit la page 
 }
 
@@ -46,6 +44,7 @@ void handle_input(programme_state *state){
     }
     const char *key_name = NULL;
     pid_t target_pid = state->selected_pid;
+    int erreur;
 
     switch (key){       //creation des cas en fonction des touches pressees
         case KEY_F(1):
@@ -62,19 +61,19 @@ void handle_input(programme_state *state){
             break;
         case KEY_F(5):
             key_name = "F5 (pause processus)\n";
-            send_process_action(target_pid, SIGSTOP, "Pause");     
+            erreur = send_process_action(target_pid, SIGSTOP, "Pause");     
             break;
         case KEY_F(6):
             key_name = "F6 (arret processus)\n";
-            send_process_action(target_pid, SIGTERM, "Arret");     
+            erreur = send_process_action(target_pid, SIGTERM, "Arret");     
             break;
         case KEY_F(7):
             key_name = "F7 (tuer/kill le processus )\n";
-            send_process_action(target_pid, SIGKILL, "Kill");  
+            erreur = send_process_action(target_pid, SIGKILL, "Kill");  
             break;
         case KEY_F(8):
             key_name = "F8 (redemarrer/reprendre le processus)\n";
-            send_process_action(target_pid,SIGCONT, "Reprise");     
+            erreur = send_process_action(target_pid,SIGCONT, "Reprise");     
             break;
         case 'q':
             state->is_running =0;   //permet de quitter la boucle 
@@ -83,9 +82,23 @@ void handle_input(programme_state *state){
         case KEY_RESIZE:        //permet le redimmensionnement du terminal
             key_name = "terminal redimensionne (KEY_RESIZE)\n";
             break;
+        case 258:
+            key_name = "Flèche/pavier bas";
+            break;
+        case 259:
+            key_name = "Flèche/pavier haut";
+            break;
         default: //pour toutes les autres touches on affiche le code numérique
             snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "autre touche : code = %d", key);
             return; //on affiche le code 
+    }
+
+    if (erreur == -1){
+        mvprintw(max_y - 2, 0, "Erreur envoie signal à %d pour %s", target_pid, key_name);
+    }
+
+    if (erreur == 0){
+        mvprintw(max_y - 2, 0, "Envoie signal à %d pour %s réussi", target_pid, key_name);
     }
 
     /*met a jour l'etat du programme avec le nom de la touche*/
