@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     wtimeout(main_work, tout); //definition du refresh 
-    
+
     //partie pour la liste des serveurs 
     int error_serv = 0;
     state.server_list = get_serveur_config(".config", &error_serv);
@@ -262,6 +262,7 @@ int main(int argc, char *argv[]) {
         }
 
         char *lkp = state.last_key_pressed;
+
         // flèche haut
         if (strstr(lkp, "Flèche/pavier haut") != NULL){ //fleche haut
             if (selected_proc->prev != NULL) {
@@ -350,6 +351,8 @@ int main(int argc, char *argv[]) {
         }
 
         draw_ui(main_work, &state, lproc, selected_proc);
+        wrefresh(main_work);
+
     }
 
     // on nettoie !
