@@ -28,18 +28,29 @@ WINDOW *initialize_ncurses(){
     return work;
 }
 
-/*creation de l'interface avec comme parametre work (fonction ncurses) et programm_state (etat du programme)*/
-void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *selected_proc){
-    int window_size = max_y - 2;
-    int total_proc = 0;
-    proc *tmp = lproc;
-    while (tmp != NULL) {
-        ++total_proc;
-        tmp = tmp->next;
-    }
-    werase(work); //permet d'effacer la fenetre d'avant utile pour afficher dynamiquement les processus 
 
-    mvprintw(0, 0, "--- HTOP MAISON LP25 ---");
+/*dessine le contenu du panneau d'aide*/
+void draw_help(WINDOW *work, int max_y, int max_x) {
+    mvprintw(2, 5, "--- Aide : Raccourcis Clavier ---");
+    //contenu de l'aide
+    mvprintw(4, 5, "[F1] : Afficher de l'aide / cacher l'aide");
+    mvprintw(5, 5, "[F2] : Onglet suivant (navigaion)");
+    mvprintw(6, 5, "[F3] : Onglet précédent (navigaion)");
+    mvprintw(7, 5, "[F4] : Recherche / Filetrage des processus");
+    mvprintw(9, 5, "[F5] : Mettre en Pause le processus sélectionné (SIGSTOP)");
+    mvprintw(10, 5, "[F6] : Arreter le processus sélectionné (SIGTERM)");
+    mvprintw(11, 5, "[F7] : Tuer (Kill) le processus sélectionné (SIGKILL)");
+    mvprintw(12, 5, "[F8] : Reprendre le processus sélectionné (SIGCONT)");
+    mvprintw(13, 5, "[q] : Quitter l'application");
+    //message indiquer en bas 
+    mvprintw(max_y -2, (max_x /2 ) - 25, "Appuyer sur F1 ou Q pour revenir à la liste des processus");
+}
+
+void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *selected_proc) {
+    int max_y, max_x;
+    getmaxyx(work, max_y, max_x);
+    werase(work);   //permet d'effacer la fenetre d'avant 
+    mvprintw(0, 0, "--- testeur de raccourcis clavier F-keys (ncurses) ---");
     if (state->is_help_displayed) {
         //affiche le panneau d'aide 
         draw_help(work, max_y, max_x);
@@ -47,10 +58,18 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
         mvprintw(2, 0, "Mode recherche activé (F4 ou entrée pour quitter la fenetre)");
         mvprintw(4, 0, "Rechercher avec le nom ou le PID : %s", state->search_term);
         //on place le curseur à la fin du terme recherché 
-        move(4, strlen("Rechercher avec le nom ou le PID :") + strlen(state->search_term));
+        move(4, strlen("Rechercher avec le PID :") + strlen(state->search_term));
     }
     else {
         //affiche l'interface noraml 
+        int total_proc = 0;
+        proc *tmp = lproc;
+        while (tmp != NULL) {
+            ++total_proc;
+            tmp = tmp->next;
+        }
+        int window_size = max_y - 2;
+
         mvprintw(2, 0, "appuyer sur une touche F (F1 à F8) ou q pour quitter ");
         mvprintw(4, 0, "voici la derniere touche detectee : %s", state->last_key_pressed);
         mvwprintw(work, 5, 0, "Nombre processus : %d ", total_proc);
@@ -78,28 +97,12 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
             } else {
                 break;
             }  
-    }
+        }
+        // c'est ici qu'on va afficher la liste des processus (SIMONNN)
     }
     // affichage commun des raccourcis (commun à l'interface help et normale)
     mvprintw(max_y - 1, 0, "[F1] aide | [F2/F3] onglets | [F4] recherche | [F5-F8] actions processus | q quitter ");
-    wrefresh(work);
-}
-
-/*dessine le contenu du panneau d'aide*/
-void draw_help(WINDOW *work, int max_y, int max_x) {
-    mvprintw(2, 5, "--- Aide : Raccourcis Clavier ---");
-    //contenu de l'aide
-    mvprintw(4, 5, "[F1] : Afficher de l'aide / cacher l'aide");
-    mvprintw(5, 5, "[F2] : Onglet suivant (navigaion)");
-    mvprintw(6, 5, "[F3] : Onglet précédent (navigaion)");
-    mvprintw(7, 5, "[F4] : Recherche / Filetrage des processus");
-    mvprintw(9, 5, "[F5] : Mettre en Pause le processus sélectionné (SIGSTOP)");
-    mvprintw(10, 5, "[F6] : Arreter le processus sélectionné (SIGTERM)");
-    mvprintw(11, 5, "[F7] : Tuer (Kill) le processus sélectionné (SIGKILL)");
-    mvprintw(12, 5, "[F8] : Reprendre le processus sélectionné (SIGCONT)");
-    mvprintw(13, 5, "[q] : Quitter l'application");
-    //message indiquer en bas 
-    mvprintw(max_y -2, (max_x /2 ) - 25, "Appuyer sur F1 ou Q pour revenir à la liste des processus");
+    wrefresh(work); 
 }
 
 /*gere les entrees du clavier et met a jour l'etat avec le parametre state (etat actuel du prog a modif)*/
@@ -188,6 +191,12 @@ void handle_input(programme_state *state, int key){
                     break;
                 case KEY_RESIZE:        //permet le redimmensionnement du terminal
                     key_name = "terminal redimensionne (KEY_RESIZE)";
+                    break;
+                case 258:
+                    key_name = "Flèche/pavier bas";
+                    break;
+                case 259:
+                    key_name = "Flèche/pavier haut";
                     break;
                 default:
                     // Pour toutes les autres touches

@@ -223,7 +223,7 @@ int main(int argc, char *argv[]){
         }
         char *lkp = state.last_key_pressed;
         // flèche haut
-        if (strstr(lkp, "259") != NULL){ //fleche haut
+        if (strstr(lkp, "Flèche/pavier haut") != NULL){ //fleche haut
             if (selected_proc->prev != NULL) {
                 selected_proc = selected_proc->prev;
             }
@@ -231,7 +231,7 @@ int main(int argc, char *argv[]){
         }
 
         // flèche bas
-        else if (strstr(lkp, "258") != NULL) { //fleche bas
+        else if (strstr(lkp, "Flèche/pavier bas") != NULL) { //fleche bas
             if (selected_proc->next != NULL) {
                 selected_proc = selected_proc->next;
             }

@@ -33,6 +33,8 @@ WINDOW *initialize_ncurses();
  *
  * \param work  Fenêtre ncurses dans laquelle dessiner l'interface.
  * \param state État courant du programme à refléter dans l'affichage.
+ * \param lproc        Liste chaînée des processus à afficher.
+ * \param selected_proc Processus actuellement sélectionné par l'utilisateur.
  */
 void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *selected_proc);
 
