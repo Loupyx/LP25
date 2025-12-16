@@ -181,6 +181,7 @@ int main(int argc, char *argv[]){
 
     WINDOW *main_work;
     programme_state state = {.is_running = 1};
+    int tout = 200; //dt du refesh
 
     // initialisation
     strcpy(state.last_key_pressed, "aucune");
@@ -189,9 +190,7 @@ int main(int argc, char *argv[]){
     if (main_work == NULL){
         return 1;
     }
-
-    draw_ui(main_work, &state);
-
+    wtimeout(main_work, tout); //definition du refresh 
     // on récupère les processus
     list_proc lproc = NULL;
     char **dirs = get_list_dirs("/proc");
@@ -204,32 +203,22 @@ int main(int argc, char *argv[]){
             return 1;
         }
     }
-    
-    int window_size = 35; // nombre de processus affichés à l'écran
     proc *selected_proc = lproc;
 
     while (state.is_running) {
+        int ch = wgetch(main_work);
+        
         // on compte le nb total de processus
         getmaxyx(main_work, max_y, max_x);
-        window_size = max_y - 2;
-        int total_proc = 0;
-        proc *tmp = lproc;
-        while (tmp != NULL) {
-            ++total_proc;
-            tmp = tmp->next;
-        }
 
-        // on lit les touches
-        char old_key[64];
-        strcpy(old_key, state.last_key_pressed);
-        handle_input(&state);
+        if (ch != ERR) {
+            // on lit les touches
+            char old_key[64];
+            strcpy(old_key, state.last_key_pressed);
+            handle_input(&state, ch);
+        }
         char *lkp = state.last_key_pressed;
-
-        // si on touche une touche, on rafraichit (pour pas rafraichir souvent)
-        if (strcmp(old_key, lkp) != 0) {
-            draw_ui(main_work, &state);
-        }
-
+        draw_ui(main_work, &state, lproc, selected_proc);
         // flèche haut
         if (strstr(lkp, "Flèche/pavier haut") != NULL){ //fleche haut
             if (selected_proc->prev != NULL) {
@@ -246,32 +235,7 @@ int main(int argc, char *argv[]){
             strcpy(state.last_key_pressed, "");
         }
 
-        mvwprintw(main_work, 5, 0, "Nombre processus : %d ", total_proc);
-        mvwprintw(main_work, 6, 0, "PID\tPPID\tUSER\t\t\t\tCPU\tSTATE\tCMD");
-
-        proc *temp_aff = selected_proc;
-        for (int i=0; temp_aff && i+7<window_size; i++) {
-            if (i == 0) {
-                wattron(main_work, A_REVERSE);    // surligne la ligne du selected_proc
-            }
-            mvwprintw(main_work, i+7, 0,
-                    "%-6d\t%-6d\t%-25s\t%-5.1f\t%c\t%.40s  ",
-                    temp_aff->PID,
-                    temp_aff->PPID,
-                    temp_aff->user ? temp_aff->user : "?",
-                    temp_aff->CPU,
-                    temp_aff->state,
-                    temp_aff->cmdline ? temp_aff->cmdline : "?"); 
-            if (i == 0) {
-                wattroff(main_work, A_REVERSE);    // surligne la ligne du selected_proc
-                state.selected_pid = temp_aff->PID;
-            }
-            if (temp_aff->next != NULL) {
-                temp_aff = temp_aff->next;
-            } else {
-                break;
-            }  
-        }
+        wrefresh(main_work);
     }
 
     // on nettoie !

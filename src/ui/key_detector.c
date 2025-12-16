@@ -27,21 +27,50 @@ WINDOW *initialize_ncurses(){
 }
 
 /*creation de l'interface avec comme parametre work (fonction ncurses) et programm_state (etat du programme)*/
-void draw_ui(WINDOW *work, programme_state *state){
+void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *selected_proc){
+    int window_size = max_y - 2;
+    int total_proc = 0;
+    proc *tmp = lproc;
+    while (tmp != NULL) {
+        ++total_proc;
+        tmp = tmp->next;
+    }
     werase(work); //permet d'effacer la fenetre d'avant utile pour afficher dynamiquement les processus 
     mvprintw(0, 0, "--- testeur de raccourcis clavier F-keys (ncurses)---\n");
     mvprintw(2, 0, "appuyer sur une touche F (F1 à F8) ou q pour quitter\n");
     mvprintw(4, 0, "voici la derniere touche detectee : %s", state->last_key_pressed);
     mvprintw(max_y - 1, 0, "[F1-F8] detectee | [q] quitter");
+    mvwprintw(work, 5, 0, "Nombre processus : %d ", total_proc);
+    mvwprintw(work, 6, 0, "PID\tPPID\tUSER\t\t\t\tCPU\tSTATE\tCMD");
+
+    proc *temp_aff = selected_proc;
+    for (int i=0; temp_aff && i+7<window_size; i++) {
+        if (i == 0) {
+            wattron(work, A_REVERSE);    // surligne la ligne du selected_proc
+        }
+        mvwprintw(work, i+7, 0,
+                "%-6d\t%-6d\t%-25s\t%-5.1f\t%c\t%.40s  ",
+                temp_aff->PID,
+                temp_aff->PPID,
+                temp_aff->user ? temp_aff->user : "?",
+                temp_aff->CPU,
+                temp_aff->state,
+                temp_aff->cmdline ? temp_aff->cmdline : "?"); 
+        if (i == 0) {
+            wattroff(work, A_REVERSE);    // surligne la ligne du selected_proc
+            state->selected_pid = temp_aff->PID;
+        }
+        if (temp_aff->next != NULL) {
+            temp_aff = temp_aff->next;
+        } else {
+            break;
+        }  
+    }
     wrefresh(work);     //rafraichit la page 
 }
 
 /*gere les entrees du clavier et met a jour l'etat avec le parametre state (etat actuel du prog a modif)*/
-void handle_input(programme_state *state){
-    int key = getch();
-    if (key == ERR){
-        return;     //aucune touche pressee
-    }
+void handle_input(programme_state *state, int key){
     const char *key_name = NULL;
     pid_t target_pid = state->selected_pid;
     int erreur;
