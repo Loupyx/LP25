@@ -58,6 +58,16 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
  * \param state État du programme à modifier en fonction des touches pressées.
  */
 
-void handle_input(programme_state *state, int key);
+void handle_input(programme_state *state, int key, list_proc *lproc);
+
+/**
+ * Permet d'enlever les majuscules pour simplifier la recherche dans F4 
+ *
+ * \param str  chaine de caracteres a analyser afin de verifier si il y a des majuscules
+ * \param term   retourne 1 si terme est contenue dans str sans majuscule
+ */
+int starts_with_case(const char *str, const char *term);
+
+
 
 #endif

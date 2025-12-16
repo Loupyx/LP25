@@ -236,7 +236,8 @@ int main(int argc, char *argv[]) {
     }
 
     proc *selected_proc = lproc;
-    
+    proc *temp = NULL;
+
     while (state.is_running) {
         int ch = wgetch(main_work); 
 
@@ -259,10 +260,13 @@ int main(int argc, char *argv[]) {
                 }
                 strncpy(state.last_key_pressed, "Navigation : BAS", sizeof(state.last_key_pressed));
             }
+            // on lit les touches
+            char old_key[64];
+            strcpy(old_key, state.last_key_pressed);
+            handle_input(&state, ch, lproc);
         }
 
         char *lkp = state.last_key_pressed;
-
         // flèche haut
         if (strstr(lkp, "Flèche/pavier haut") != NULL){ //fleche haut
             if (selected_proc->prev != NULL) {
@@ -351,6 +355,22 @@ int main(int argc, char *argv[]) {
         }
 
         draw_ui(main_work, &state, lproc, selected_proc);
+        dirs = get_list_dirs("/proc");
+        update_l_proc(&lproc, NULL, dirs, LOCAL);
+        if (!lproc) {
+            state.is_running = 0;
+        }
+
+        temp = lproc;
+        while (temp && (temp->PID < selected_proc->PID)){
+            temp = temp->next;
+        }
+
+        if (!temp) {
+            state.is_running = 0;
+        } else {
+            selected_proc = temp;
+        }
         wrefresh(main_work);
 
     }
