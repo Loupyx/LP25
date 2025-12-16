@@ -244,7 +244,6 @@ int main(int argc, char *argv[]){
             handle_input(&state, ch);
         }
         char *lkp = state.last_key_pressed;
-        draw_ui(main_work, &state, lproc, selected_proc);
         // flèche haut
         if (strstr(lkp, "Flèche/pavier haut") != NULL){ //fleche haut
             if (selected_proc->prev != NULL) {
