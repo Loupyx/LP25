@@ -233,6 +233,7 @@ if (dirs != NULL) {
     int window_size = 35; // nombre de processus affichés à l'écran
 
     proc *selected_proc = lproc;
+    proc *temp = NULL;
 
     while (state.is_running) {
         int ch = wgetch(main_work);
@@ -247,7 +248,6 @@ if (dirs != NULL) {
             handle_input(&state, ch);
         }
         char *lkp = state.last_key_pressed;
-        draw_ui(main_work, &state, lproc, selected_proc);
         // flèche haut
         if (strstr(lkp, "Flèche/pavier haut") != NULL){ //fleche haut
             if (selected_proc->prev != NULL) {
@@ -262,6 +262,24 @@ if (dirs != NULL) {
                 selected_proc = selected_proc->next;
             }
             strcpy(state.last_key_pressed, "");
+        }
+
+        draw_ui(main_work, &state, lproc, selected_proc);
+        dirs = get_list_dirs("/proc");
+        update_l_proc(&lproc, NULL, dirs, LOCAL);
+        if (!lproc) {
+            state.is_running = 0;
+        }
+
+        temp = lproc;
+        while (temp && (temp->PID < selected_proc->PID)){
+            temp = temp->next;
+        }
+
+        if (!temp) {
+            state.is_running = 0;
+        } else {
+            selected_proc = temp;
         }
 
         wrefresh(main_work);
