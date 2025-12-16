@@ -1,6 +1,7 @@
 #ifndef KEY_DETECTOR_H
 #define KEY_DETECTOR_H
 #include <sys/types.h>
+#include "./../process/Processus.h"
 
 /**
  * Représente l'état global du programme pour l'interface ncurses.
@@ -30,14 +31,14 @@ WINDOW *initialize_ncurses();
  * \param work  Fenêtre ncurses dans laquelle dessiner l'interface.
  * \param state État courant du programme à refléter dans l'affichage.
  */
-void draw_ui(WINDOW *work, programme_state *state);
+void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *selected_proc);
 
 /**
  * Gère les entrées clavier de l'utilisateur et met à jour l'état du programme.
  *
  * \param state État du programme à modifier en fonction des touches pressées.
  */
-void handle_input(programme_state *state);
+void handle_input(programme_state *state, int key);
 
 
 #endif
