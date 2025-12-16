@@ -227,12 +227,6 @@ int main(int argc, char *argv[]){
             return 1;
         }
     }
-
-    destoy_char(dirs);
-}
-    int window_size = 35; // nombre de processus affichés à l'écran
-
-
     proc *selected_proc = lproc;
     proc *temp = NULL;
 
@@ -250,6 +244,7 @@ int main(int argc, char *argv[]){
             handle_input(&state, ch);
         }
         char *lkp = state.last_key_pressed;
+        draw_ui(main_work, &state, lproc, selected_proc);
         // flèche haut
         if (strstr(lkp, "Flèche/pavier haut") != NULL){ //fleche haut
             if (selected_proc->prev != NULL) {
