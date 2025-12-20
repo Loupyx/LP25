@@ -38,10 +38,17 @@ proc *add_queue_proc(proc *list, proc *p) {
 }
 
 void print_proc(proc *p) {
-    fprintf(stderr,
+    FILE *log = fopen(".log", "a");
+    if (!log) {
+        // éventuellement fallback sur stderr
+        fprintf(stderr, "Can't open log file\n");
+        return;
+    }
+    fprintf(log,
         "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\nupdate : %ld\n",
-        p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU,p->vsize, p->time, p->update_time);
-
+        p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU,p->vsize, p->time, p->update_time
+    );
+    fclose(log);
 }
 
 void print_l_proc(list_proc l) {
@@ -59,29 +66,42 @@ void print_l_proc(list_proc l) {
 proc* create_proc() {
     //initialisation d'un nouveau processus
     proc *new_proc = (proc*)calloc(1, sizeof(proc));
+    FILE *log = fopen(".log", "a");
+    if (!log) {
+        // éventuellement fallback sur stderr
+        fprintf(stderr, "Can't open log file\n");
+        return NULL;
+    }
     if (!new_proc) {
-        fprintf(stderr, "new_proc\n");
+        fprintf(log, "new_proc\n");
         return NULL;
     }
     new_proc->cmdline = (char*)calloc(SIZE_CHAR,sizeof(char));
     if (!new_proc->cmdline) {
-        fprintf(stderr, "cmdline\n");
+        fprintf(log, "cmdline\n");
         return NULL;
     }
     new_proc->user = (char*)malloc(SIZE_CHAR*sizeof(char));
     if (!new_proc->user) {
-        fprintf(stderr, "user\n");
+        fprintf(log, "user\n");
         return NULL;
     }
     new_proc->next = NULL;
     new_proc->prev = NULL;
+    fclose(log);
     return new_proc;
 }
 
 char *get_char(char *pid, char *file, enum acces_type connexion, ssh_state *state) {
+    FILE *log = fopen(".log", "a");
+    if (!log) {
+        // éventuellement fallback sur stderr
+        fprintf(stderr, "Can't open log file\n");
+        return NULL;
+    }
     char path[SIZE_CHAR], *text;
     if (connexion == SSH && state == NULL) {
-        fprintf(stderr, "SSH_STATE NULL in *get_stat for PID : %s\n", pid);
+        fprintf(log, "SSH_STATE NULL in *get_stat for PID : %s\n", pid);
         return NULL;
     }
     snprintf(path, sizeof(path), "/proc/%s/%s", pid, file);
@@ -97,13 +117,14 @@ char *get_char(char *pid, char *file, enum acces_type connexion, ssh_state *stat
             text = get_char_telnet();
             break;
         default:
-            fprintf(stderr, "Wrong connexion type\n");
+            fprintf(log, "Wrong connexion type\n");
             return NULL;
             break;
     }
     if (!text) {
-        fprintf(stderr, "Cannot get char for : %s\n", path);
+        fprintf(log, "Cannot get char for : %s\n", path);
     }
+    fclose(log);
     return text;
 }
 
@@ -144,22 +165,28 @@ int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state){
 }
 
 proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
+    FILE *log = fopen(".log", "a");
+    if (!log) {
+        // éventuellement fallback sur stderr
+        fprintf(stderr, "Can't open log file\n");
+        return NULL;
+    }
     char **data, *unformated;
     proc *new = create_proc();
     if (!new) {
-        fprintf(stderr, "Can't alloc new in get_all_proc\n");
+        fprintf(log, "Can't alloc new in get_all_proc\n");
         return NULL;
     }
 
     unformated = get_char(pid, "stat", connexion, state);
     if (!unformated) {
-        fprintf(stderr, "return NULL to unformated for : %s\n", pid);
+        fprintf(log, "return NULL to unformated for : %s\n", pid);
         return NULL;
     }
     data = split(unformated, ' ');
 
     if (!data || !data[0]) {
-        fprintf(stderr, "split returned empty for '%s'\n", unformated);
+        fprintf(log, "split returned empty for '%s'\n", unformated);
         return NULL;
     }
     free(unformated);
@@ -173,20 +200,20 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
     int error = get_time(pid, new, connexion, state);
 
     if(error == 1){
-        fprintf(stderr, "erreur get_time for %d", new->PID);
+        fprintf(log, "erreur get_time for %d", new->PID);
         return NULL;
     }
 
     unformated = get_char(pid, "status", connexion, state);
     if (!unformated) {
-        fprintf(stderr, "return NULL to unformated for : %s\n", pid);
+        fprintf(log, "return NULL to unformated for : %s\n", pid);
         free(new);
         return NULL;
     }
     data = split(unformated, '\t');
 
     if (!data || !data[0]) {
-        fprintf(stderr, "split returned empty for '%s'\n", unformated);
+        fprintf(log, "split returned empty for '%s'\n", unformated);
         free(new);
         return NULL;
     }
@@ -196,7 +223,7 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
         int transpho = atoi(temp[9]);
         struct passwd *pw = getpwuid(transpho);
         if (!pw || !pw->pw_name) { 
-            fprintf(stderr, "error pw\n");
+            fprintf(log, "error pw\n");
             free(new);
             return NULL;
         }
@@ -204,21 +231,21 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
     }
 
     new->update_time = time(NULL);
-
+    fclose(log);
     return new;
 }
 
 //implémentation de l'envoi du signal au processus
 int send_process_action(pid_t pid, int action_signal, const char *action_name) {
     if (pid <= 1) {
-        //fprintf(stderr, "erreur action : PID invalide (%d)\n", pid);
+        //fprintf(log, "erreur action : PID invalide (%d)\n", pid);
         return -1;
     }
     if (kill(pid, action_signal) == 0) {
-        //fprintf(stderr, "Succes : action '%s' envoyée au PID %d\n", action_name, pid );
+        //fprintf(log, "Succes : action '%s' envoyée au PID %d\n", action_name, pid );
         return 0;
     } else {
-        //fprintf(stderr, "erreur lors de l'envoie du signal %s au PID %d: %s\n",action_name, pid, strerror(errno));
+        //fprintf(log, "erreur lors de l'envoie du signal %s au PID %d: %s\n",action_name, pid, strerror(errno));
         return -1;
     }
 }

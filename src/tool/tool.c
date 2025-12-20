@@ -13,6 +13,12 @@
 
 //LOCAL
 char *get_char_file(char *path) {
+    FILE *log = fopen(".log", "a");
+    if (!log) {
+        // éventuellement fallback sur stderr
+        fprintf(stderr, "Can't open log file\n");
+        return NULL;
+    }
     if (!path) {
         return NULL;
     }
@@ -21,7 +27,7 @@ char *get_char_file(char *path) {
     int size = 0,ic;
     file = fopen(path, "r");
     if (!file) {
-        printf("Error fopen\n");
+        fprintf(log, "Error fopen for : %s\n", path);
         return NULL;
     }
     while ((ic = fgetc(file)) != EOF) {
@@ -49,17 +55,24 @@ char *get_char_file(char *path) {
     fclose(file);
 
     text[size] = '\0';
+    fclose(log);
     return text;
 }
 
 char **get_list_dirs(const char *path) {
+    FILE *log = fopen(".log", "a");
+    if (!log) {
+        // éventuellement fallback sur stderr
+        fprintf(stderr, "Can't open log file\n");
+        return NULL;
+    }
     DIR *dir;
     struct dirent *entry;
     char **names = NULL;
     int size, nb_dir = 0;
     dir = opendir(path);
     if (!dir) {
-        fprintf(stderr, "opendir");
+        fprintf(log, "opendir");
         return NULL;
     }
     while ((entry = readdir(dir)) != NULL) {
@@ -84,32 +97,39 @@ char **get_list_dirs(const char *path) {
             names[nb_dir] = NULL;
         }
     }
+    fclose(log);
     return names;
 
 }
 
 //SSH
 char *get_char_ssh(ssh_state *state, char *path) {
+    FILE *log = fopen(".log", "a");
+    if (!log) {
+        // éventuellement fallback sur stderr
+        fprintf(stderr, "Can't open log file\n");
+        return NULL;
+    }
     char command[256];
     if (!path) {
-        fprintf(stderr, "get_char_ssh : path\n");
+        fprintf(log, "get_char_ssh : path\n");
         return NULL;
     }
 
     if (!state) {
-        fprintf(stderr, "get_char_ssh : state\n");
+        fprintf(log, "get_char_ssh : state\n");
         return NULL;
     }
 
     ssh_channel chan = ssh_channel_new(state->session);
     if (!chan) {
-        fprintf(stderr, "get_char_ssh : channel\n");
+        fprintf(log, "get_char_ssh : channel\n");
         return NULL;
     }
 
     if (ssh_channel_open_session(chan) != SSH_OK) {
         ssh_channel_free(chan);
-        fprintf(stderr, "get_char_ssh : channel session\n");
+        fprintf(log, "get_char_ssh : channel session\n");
         return NULL;
     }
 
@@ -117,7 +137,7 @@ char *get_char_ssh(ssh_state *state, char *path) {
     if (ssh_channel_request_exec(chan, command) != SSH_OK) {
         ssh_channel_close(chan);
         ssh_channel_free(chan);
-        fprintf(stderr, "get_char_ssh : channel cat\n");
+        fprintf(log, "get_char_ssh : channel cat\n");
         return NULL;
     }
 
@@ -142,30 +162,37 @@ char *get_char_ssh(ssh_state *state, char *path) {
     ssh_channel_send_eof(chan);
     ssh_channel_close(chan);
     ssh_channel_free(chan);
+    fclose(log);
     return text;
 }
 
 char **get_ssh_dir(ssh_state *state, char *path) {
+    FILE *log = fopen(".log", "a");
+    if (!log) {
+        // éventuellement fallback sur stderr
+        fprintf(stderr, "Can't open log file\n");
+        return NULL;
+    }
     if (!state || !state->session || !path) {
-        fprintf(stderr, "get_ssh_dir: bad arguments\n");
+        fprintf(log, "get_ssh_dir: bad arguments\n");
         return NULL;
     }
 
     sftp_session sftp = sftp_new(state->session);
     if (!sftp) {
-        fprintf(stderr, "get_ssh_dir: sftp_new failed\n");
+        fprintf(log, "get_ssh_dir: sftp_new failed\n");
         return NULL;
     }
 
     if (sftp_init(sftp) != SSH_OK) {
-        fprintf(stderr, "get_ssh_dir: sftp_init failed: %s\n", ssh_get_error(state->session));
+        fprintf(log, "get_ssh_dir: sftp_init failed: %s\n", ssh_get_error(state->session));
         sftp_free(sftp);
         return NULL;
     }
 
     sftp_dir dir = sftp_opendir(sftp, path);
     if (!dir) {
-        fprintf(stderr, "get_ssh_dir: sftp_opendir('%s') failed: %s\n", path, ssh_get_error(state->session));
+        fprintf(log, "get_ssh_dir: sftp_opendir('%s') failed: %s\n", path, ssh_get_error(state->session));
         sftp_free(sftp);
         return NULL;
     }
@@ -192,7 +219,7 @@ char **get_ssh_dir(ssh_state *state, char *path) {
             size = strlen(attrs->name);
             res[nb_dir] = (char*)malloc(sizeof(char)*(size+1));
             if (!res[nb_dir]) {
-                fprintf(stderr, "get_ssh_dir: malloc failed\n");
+                fprintf(log, "get_ssh_dir: malloc failed\n");
                 sftp_attributes_free(attrs);
                 free_ssh_dir(res);
                 sftp_closedir(dir);
@@ -208,7 +235,7 @@ char **get_ssh_dir(ssh_state *state, char *path) {
     char **tmp = realloc(res, (nb_dir + 1) * sizeof(char *));
     if (!tmp && nb_dir > 0) {
         // cas très rare, mais on gère proprement
-        fprintf(stderr, "get_ssh_dir: final realloc failed\n");
+        fprintf(log, "get_ssh_dir: final realloc failed\n");
         free_ssh_dir(res);
         sftp_closedir(dir);
         sftp_free(sftp);
@@ -218,6 +245,7 @@ char **get_ssh_dir(ssh_state *state, char *path) {
     res[nb_dir] = NULL;
     sftp_closedir(dir);
     sftp_free(sftp);
+    fclose(log);
     return res;
 }
 
@@ -235,8 +263,14 @@ char *get_char_telnet(){
 
 //AUTRE
 char **split(char *line, char delim) {
+    FILE *log = fopen(".log", "a");
+    if (!log) {
+        // éventuellement fallback sur stderr
+        fprintf(stderr, "Can't open log file\n");
+        return NULL;
+    }
     if (!line) {
-        fprintf(stderr, "DEBUG: split got NULL line\n");
+        fprintf(log, "DEBUG: split got NULL line\n");
         return NULL;
     }
     int n = strlen(line);
@@ -276,6 +310,7 @@ char **split(char *line, char delim) {
             start = i + 1;
         }
     }
+    fclose(log);
     return res;
 }
 
