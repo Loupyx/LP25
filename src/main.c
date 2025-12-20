@@ -239,16 +239,16 @@ int main(int argc, char *argv[]){
         dirs = get_list_dirs("/proc");
         update_l_proc(&lproc, NULL, dirs, LOCAL);
         if (!lproc) {
-            state.is_running = 0;
+            state.is_running = -1;
         }
 
         temp = lproc;
-        while (temp && (temp->PID < selected_proc->PID)){
+        while (temp->next && (temp->PID < selected_proc->PID)){
             temp = temp->next;
         }
 
         if (!temp) {
-            state.is_running = 0;
+            state.is_running = -1;
         } else {
             selected_proc = temp;
         }
@@ -264,6 +264,17 @@ int main(int argc, char *argv[]){
         if (tmp->user) free(tmp->user);
         if (tmp->cmdline) free(tmp->cmdline);
         free(tmp);
+    }
+
+    if (state.is_running == -1) {
+        FILE *log = fopen(".log", "a");
+        if (!log) {
+            // éventuellement fallback sur stderr
+            fprintf(stderr, "Can't open log file\n");
+            return 1;
+        }
+        fprintf(log, "Erreur app\n");
+        fclose(log);
     }
 
     printf("LP25 Fini\n");
