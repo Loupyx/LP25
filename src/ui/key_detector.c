@@ -46,6 +46,46 @@ void draw_help(WINDOW *work, int max_y, int max_x) {
     mvprintw(max_y -2, (max_x /2 ) - 25, "Appuyer sur F1 ou Q pour revenir à la liste des processus");
 }
 
+// partie qui gere la fenetre recherche 
+void draw_search_results(WINDOW *work, list_proc lproc, char *term, int max_y) {
+    proc *temp = lproc;
+    int lignes_affichees = 0;
+    int match_count = 0; // compteur de correspondances
+
+    while (temp && (lignes_affichees + 7 < max_y - 2)) {
+        int match = 0;
+        char pid_str[16];
+        snprintf(pid_str, sizeof(pid_str), "%d", temp->PID);
+
+        if (strlen(term) == 0) {
+        match = 1;
+        } else if (strcmp(pid_str, term) == 0) {
+        match = 1;
+        } else if (temp->cmdline) {
+        // on crée un pointeur qui ignore la '(' au début du nom si elle existe
+        char *nom_nettoye = (temp->cmdline[0] == '(') ? &temp->cmdline[1] : temp->cmdline;
+        
+        // on compare le terme recherché avec ce nom "nettoyé"
+        if (strncmp(nom_nettoye, term, strlen(term)) == 0) {
+            match = 1;
+            }
+        }
+        if (match) {
+            mvwprintw(work, lignes_affichees + 7, 0, "%-6d\t%-6d\t%-25s\t%-5.1f\t%c\t%.40s",
+                      temp->PID, temp->PPID, temp->user ? temp->user : "?",
+                      temp->CPU, temp->state, temp->cmdline ? temp->cmdline : "?");
+            lignes_affichees++;
+            match_count++;
+        }
+        temp = temp->next;
+    }
+
+    // si on trouve rien qui correspond : on affiche un message d'alerte
+    if (match_count == 0 && strlen(term) > 0) {
+        mvwprintw(work, 8, 0, " [!] Aucun processus ne correspond a : '%s'", term);
+    }
+}
+
 void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *selected_proc) {
     int max_y, max_x;
     getmaxyx(work, max_y, max_x);
@@ -55,10 +95,13 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
         //affiche le panneau d'aide 
         draw_help(work, max_y, max_x);
     } else if (state->is_search_active) {
-        mvprintw(2, 0, "Mode recherche activé (F4 ou entrée pour quitter la fenetre)");
-        mvprintw(4, 0, "Rechercher avec le nom ou le PID : %s", state->search_term);
-        //on place le curseur à la fin du terme recherché 
-        move(4, strlen("Rechercher avec le PID :") + strlen(state->search_term));
+        mvprintw(2, 0, "Mode recherche activé (ENTREE pour filtrer | F4 ou 'q' pour quitter)");
+        mvprintw(4, 0, "Recherche : %s", state->search_term); // Texte simplifié
+        mvwprintw(work, 6, 0, "PID\tPPID\tUSER\t\t\t\tCPU\tSTATE\tCMD");   
+        draw_search_results(work, lproc, state->search_term, max_y);
+        curs_set(1); //permet de mettre a jour l'affichage et de voir ce que l'on écrit 
+        // on place le curseur juste après le mot "recherche"
+        move(4, strlen("Recherche : ") + strlen(state->search_term));
     }
     else {
         //affiche l'interface noraml 
@@ -100,10 +143,20 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
         }
         // c'est ici qu'on va afficher la liste des processus (SIMONNN)
     }
-    // affichage commun des raccourcis (commun à l'interface help et normale)
+    // affichage commun des raccourcis
     mvprintw(max_y - 1, 0, "[F1] aide | [F2/F3] onglets | [F4] recherche | [F5-F8] actions processus | q quitter ");
+
+    if (state->is_search_active && !state->is_help_displayed) {
+        curs_set(1); // curseur visible
+        // On utilise wmove pour être sûr de cibler la bonne fenêtre
+        wmove(work, 4, strlen("Recherche : ") + strlen(state->search_term));
+    } else {
+        curs_set(0); // curseur invisible en mode normal ou aide
+    }
+
     wrefresh(work); 
 }
+
 
 /*gere les entrees du clavier et met a jour l'etat avec le parametre state (etat actuel du prog a modif)*/
 void handle_input(programme_state *state, int key){
@@ -119,14 +172,14 @@ void handle_input(programme_state *state, int key){
 
         case 'q':
             if (state->is_help_displayed) {
-                // Si on est dans l'aide, 'q' ferme l'aide
                 state->is_help_displayed = 0;
-                key_name = "'q' (ferme l'aide)";
+            } else if (state->is_search_active) {
+                state->is_search_active = 0; // On ferme juste la recherche
+                state->search_term[0] = '\0'; // On réinitialise la recherche
             } else {
-                // Sinon, 'q' quitte l'application
-                state->is_running = 0;
-                key_name = "'q' (quitter)";
+                state->is_running = 0; // On quitte le programme seulement si ni aide ni recherche ne sont actives
             }
+            key_name = "'q'";
             break;
 
         default: 
@@ -136,27 +189,28 @@ void handle_input(programme_state *state, int key){
             }
             if (state->is_search_active) {
                 int len = strlen(state->search_term);
-                if (key == '\n' || key == KEY_ENTER || key == KEY_F(4)) {
-                    //sortie du mode recherche
-                    state->is_search_active = 0;
-                    key_name = "Fin de recherche (ENTREE/F4)";
-                    //C'EST ICI QU'ON VA LANCER LE FILTRAGE DES PROCESSUS EN UTILISANT LA CHAINE STOCKEE DANS STATE-<SEARCH_TERM
-                } else if (key == KEY_BACKSPACE || key == 127) {    //127 correspond au code clavier 
-                    //supp du dernier caractere 
-                    if (len > 0 ) {
-                        state->search_term[len - 1] = '\0';
-                    }
+                
+                if (key == '\n' || key == KEY_ENTER) {
+                    key_name = "Recherche validée";
+                    // On ne fait rien d'autre : l'affichage se mettra à jour tout seul
+                } 
+                else if (key == KEY_F(4)) {
+                    state->is_search_active = 0; // Seul F4 ferme maintenant le mode
+                    key_name = "Fin de recherche (F4)";
+                } 
+                else if (key == KEY_BACKSPACE || key == 127 || key == 8) {
+                    if (len > 0) state->search_term[len - 1] = '\0';
                     key_name = "Saisie : BACKSPACE";
-                } else if (isprint(key) && (len < sizeof(state->search_term) - 1)) {
+                } 
+                else if (isprint(key) && (len < (int)sizeof(state->search_term) - 1)) {
                     state->search_term[len] = (char)key;
                     state->search_term[len + 1] = '\0';
-                    key_name = "Saisie : Caractere";
                 }
+                
                 if (key_name) {
                     strncpy(state->last_key_pressed, key_name, sizeof(state->last_key_pressed) - 1);
-                    state->last_key_pressed[sizeof(state->last_key_pressed) - 1] = '\0';
                 }
-                return;
+                return; 
             }
             
             // Traitement des autres touches si l'aide n'est PAS affichée

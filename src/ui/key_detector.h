@@ -29,6 +29,16 @@ typedef struct {
 WINDOW *initialize_ncurses();
 
 /**
+ * Dessine l'interface utilisateur pour la partie recherche des processus
+ *
+ * \param work  Fenêtre ncurses dans laquelle dessiner l'interface.
+ * \param term   Permet de donner une chaine de caracteres pour trouver un processus.
+ * \param lproc        Liste chaînée des processus à afficher.
+ * \param max_y Taille maximal de la fenetre en ordonnée.
+ */
+void draw_search_results(WINDOW *work, list_proc lproc, char *term, int max_y);
+
+/**
  * Dessine l'interface utilisateur dans la fenêtre fournie.
  *
  * \param work  Fenêtre ncurses dans laquelle dessiner l'interface.
