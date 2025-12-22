@@ -17,7 +17,7 @@ int write_log(const char *text, ...) {
     FILE *f;
     if (!log) {
         // éventuellement fallback sur stderr
-        printf("Can't open log file for : \n");
+        printf("Can't open log file for : ");
         f = stdout;
     } else {
         f = log;
@@ -45,7 +45,6 @@ char *get_char_file(char *path) {
     int size = 0,ic;
     file = fopen(path, "r");
     if (!file) {
-        fclose(file);
         write_log("Error fopen for : %s", path);
         return NULL;
     }
@@ -82,7 +81,7 @@ char **get_list_dirs(const char *path) {
     int size, nb_dir = 0;
     dir = opendir(path);
     if (!dir) {
-        write_log("opendir");
+        write_log("ERROR : Canno't opendir for %s", path);
         return NULL;
     }
     while ((entry = readdir(dir)) != NULL) {
@@ -95,6 +94,11 @@ char **get_list_dirs(const char *path) {
             char *word = malloc(size + 1);
             if (!word) {
                 write_log("ERROR : allocation word");
+                for (int i = 0; i < nb_dir; i++) {
+                    free(names[i]);
+                }
+                free(names);
+                closedir(dir);
                 return NULL;
             }
             strcpy(word, entry->d_name);
@@ -102,6 +106,11 @@ char **get_list_dirs(const char *path) {
             if (!tmp) {
                 free(word);
                 write_log("ERROR : reallocation tmp");
+                for (int i = 0; i < nb_dir; i++) {
+                    free(names[i]);
+                }
+                free(names);
+                closedir(dir);
                 return NULL;
             }
             names = tmp;
@@ -109,8 +118,8 @@ char **get_list_dirs(const char *path) {
             names[nb_dir] = NULL;
         }
     }
+    closedir(dir);
     return names;
-
 }
 
 //SSH
