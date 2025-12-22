@@ -202,29 +202,12 @@ int main(int argc, char *argv[]){
     int err;
 
     if (dirs != NULL) {
-
-        // on commence par les proc locaux
         err = get_all_proc(&lproc, NULL, dirs, LOCAL);
-        if (err != 0) {
-            endwin();
-            printf("ERREUR: get_all_proc LOCAL = %d\n", err);
         destoy_char(dirs);
-        return 1;
-    }
-
-    if (all == 1) { // si all = 1, on affiche aussi les proc sur un serveur distant
-        if (login == "SSH"){
-            err = get_all_proc(&lproc, remote_server, dirs, SSH);
-        }
-        if (login == "TELNET"){
-            err = get_all_proc(&lproc, remote_server, dirs, TELNET);
-        }
-        
         if (err != 0) {
             endwin();
-            printf("ERREUR: get_all_proc REMOTE = %d\n", err);
-            destoy_char(dirs);
-            return 1;
+            printf("ERREUR: get_all_proc = %d\n", err);
+            return 2;
         }
     }
     proc *selected_proc = lproc;
@@ -260,6 +243,8 @@ int main(int argc, char *argv[]){
             strcpy(state.last_key_pressed, "");
         }
 
+        write_log("ReadKey : OK");
+
         draw_ui(main_work, &state, lproc, selected_proc);
         dirs = get_list_dirs("/proc");
         if (!dirs) {
@@ -275,6 +260,17 @@ int main(int argc, char *argv[]){
             state.is_running = 5;
             break;
         }
+        write_log("Dir : OK");
+        err = update_l_proc(&lproc, NULL, dirs, LOCAL);
+        if (err != 0) {
+            state.is_running = 4;
+            write_log("ERROR : update");
+        }
+        if (!lproc) {
+            state.is_running = 5;
+            break;
+        }
+        write_log("Update : OK");
 
         temp = lproc;
 
@@ -292,6 +288,7 @@ int main(int argc, char *argv[]){
             }
         }
         wrefresh(main_work);
+        write_log("End loop");
     }
 
     // on nettoie !
