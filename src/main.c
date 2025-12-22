@@ -171,6 +171,7 @@ int get_arg(int argc, char *argv[]){
 int main(int argc, char *argv[]){
     write_log("--------------------Init new session----------------------");
     int argument = get_arg(argc, argv);
+    int err;
 
     if (argument == 1) { //erreur dans les arguments
         return 1;
@@ -196,18 +197,19 @@ int main(int argc, char *argv[]){
     list_proc lproc = NULL;
     char **dirs = get_list_dirs("/proc");
     if (dirs != NULL) {
-        int err = get_all_proc(&lproc, NULL, dirs, LOCAL);
+        err = get_all_proc(&lproc, NULL, dirs, LOCAL);
         destoy_char(dirs);
         if (err != 0) {
             endwin();
             printf("ERREUR: get_all_proc = %d\n", err);
-            return 1;
+            return 2;
         }
     }
     proc *selected_proc = lproc;
     proc *temp = NULL;
 
     while (state.is_running) {
+        err = 0;
         int ch = wgetch(main_work);
         
         // on compte le nb total de processus
@@ -236,18 +238,30 @@ int main(int argc, char *argv[]){
             strcpy(state.last_key_pressed, "");
         }
 
+        write_log("ReadKey : OK");
+
         draw_ui(main_work, &state, lproc, selected_proc);
         dirs = get_list_dirs("/proc");
-        update_l_proc(&lproc, NULL, dirs, LOCAL);
-        if (!lproc) {
-            state.is_running = -1;
+        if (!dirs) {
+            write_log("Dir : NO");
+            return 3;
         }
+        write_log("Dir : OK");
+        err = update_l_proc(&lproc, NULL, dirs, LOCAL);
+        if (err != 0) {
+            state.is_running = 4;
+            write_log("ERROR : update");
+        }
+        if (!lproc) {
+            state.is_running = 5;
+            break;
+        }
+        write_log("Update : OK");
 
         temp = lproc;
-        
 
         if (!temp) {
-            state.is_running = -1;
+            state.is_running = 6;
         } else {
             while (temp->next && (temp->PID < selected_proc->PID)){
                 temp = temp->next;
@@ -259,6 +273,7 @@ int main(int argc, char *argv[]){
             }
         }
         wrefresh(main_work);
+        write_log("End loop");
     }
 
     // on nettoie !
@@ -271,8 +286,8 @@ int main(int argc, char *argv[]){
         free(tmp);
     }
 
-    if (state.is_running == -1) {
-        write_log("Erreur app");
+    if (state.is_running != 0) {
+        write_log("Erreur app : %d", state.is_running);
     }
 
     write_log("LP25 Fini\n");
