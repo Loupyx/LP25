@@ -5,12 +5,13 @@
 #include <string.h>
 #include "network_SSH.h"
 #include "network_main.h"
+#include "./../tool/tool.h"
 
 //SSH
 ssh_state *init_ssh_session(server *serv) {
     ssh_state *state = (ssh_state*)malloc(sizeof(ssh_state));
     if (!state) {
-        fprintf(stderr, "Erreur allocation ssh_state");
+        write_log("Erreur allocation ssh_state");
         return NULL;
     }
     state->session = NULL;
@@ -20,7 +21,7 @@ ssh_state *init_ssh_session(server *serv) {
 
     state->session = ssh_new(); //création nouvelle session
     if (!state->session) {
-        fprintf(stderr, "Erreur: ssh_new\n");
+        write_log("Erreur: ssh_new");
         return NULL;
     }
 
@@ -30,14 +31,14 @@ ssh_state *init_ssh_session(server *serv) {
 
     state->rc = ssh_connect(state->session); //connexion
     if (state->rc != SSH_OK) {
-        fprintf(stderr, "Erreur de connexion: %s\n", ssh_get_error(state->session));
+        write_log("Erreur de connexion: %s", ssh_get_error(state->session));
         destroy_ssh_state(state);
         return NULL;
     }
 
     state->rc = ssh_userauth_password(state->session, NULL, serv->password); //identification
     if (state->rc != SSH_AUTH_SUCCESS) {
-        fprintf(stderr, "Erreur d'authentification: %s\n", ssh_get_error(state->session));
+        write_log("Erreur d'authentification: %s", ssh_get_error(state->session));
         ssh_disconnect(state->session);
         destroy_ssh_state(state);
         return NULL;
@@ -45,14 +46,14 @@ ssh_state *init_ssh_session(server *serv) {
 
     state->sftp = sftp_new(state->session); //session sftp
     if (state->sftp == NULL) {
-        fprintf(stderr, "Erreur sftp_new: %s\n", ssh_get_error(state->session));
+        write_log("Erreur sftp_new: %s", ssh_get_error(state->session));
         destroy_ssh_state(state);
         return NULL;
     }
 
     state->rc = sftp_init(state->sftp);
     if (state->rc != SSH_OK) {
-        fprintf(stderr, "Erreur sftp_init: %d\n", sftp_get_error(state->sftp));
+        write_log("Erreur sftp_init: %d", sftp_get_error(state->sftp));
         destroy_ssh_state(state);
         return NULL;
     }
@@ -66,7 +67,7 @@ int open_dir_ssh(ssh_state *state) {
 
     state->dir = sftp_opendir(state->sftp, path);
     if (state->dir == NULL) {
-        fprintf(stderr, "Impossible d'ouvrir le dossier %s: %s\n", path, ssh_get_error(state->session));
+        write_log("Impossible d'ouvrir le dossier %s: %s", path, ssh_get_error(state->session));
         destroy_ssh_state(state);
         return 1;
     }
@@ -81,12 +82,11 @@ int open_dir_ssh(ssh_state *state) {
 int close_dir_ssh(ssh_state *state) {
     state->rc = sftp_closedir(state->dir);
     if (state->rc != SSH_OK) {
-        fprintf(stderr, "Erreur sftp_closedir: %s\n", ssh_get_error(state->sftp));
+        write_log("Erreur sftp_closedir: %s", ssh_get_error(state->sftp));
         return 1;
     }
 
     return 0;
-
 }
 
 void destroy_ssh_state(ssh_state *s) {

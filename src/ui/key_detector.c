@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <signal.h> // Pour les constantes de signaux (SIGSTOP, SIGKILL, etc.)
 #include "./../process/Processus.h"
+#include "./../tool/tool.h"
 #include "key_detector.h"
 
 extern int max_y, max_x; 
@@ -15,7 +16,7 @@ WINDOW* est un pointeur vers la fenetre principale (stdscr)*/
 WINDOW *initialize_ncurses(){
     WINDOW *work = initscr();
     if (work == NULL){
-        fprintf(stderr, "erreur lors de l'initialisation de ncurses\n");
+        write_log("erreur lors de l'initialisation de ncurses");
         return NULL;
     }
     /*configuration des gestions des touches entrées*/

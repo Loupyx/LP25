@@ -102,4 +102,5 @@ void print_str_array(char **tab);
  */
 void destoy_char(char *line[]);
 
+int write_log(const char *text, ...);
 #endif
