@@ -90,7 +90,7 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
     int max_y, max_x;
     getmaxyx(work, max_y, max_x);
     werase(work);   //permet d'effacer la fenetre d'avant 
-    mvprintw(0, 0, "--- testeur de raccourcis clavier F-keys (ncurses) ---");
+    mvprintw(0, 0, "--- interface HTOP projet LP25 ---");
     if (state->is_help_displayed) {
         //affiche le panneau d'aide 
         draw_help(work, max_y, max_x);
