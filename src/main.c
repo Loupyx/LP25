@@ -122,7 +122,7 @@ int get_arg(int argc, char *argv[]){
 
     // Si aucune option n'a été donnée, on affiche juste les processus locaux
     if (argc == 1) {
-        printf("Pas d'option précisée, on se contente d'afficher les processus locaux.\n");
+        write_log("Pas d'option précisée, on se contente d'afficher les processus locaux.");
         return 0;
     }
 
@@ -169,6 +169,7 @@ int get_arg(int argc, char *argv[]){
 }
 
 int main(int argc, char *argv[]){
+    write_log("--------------------Init new session----------------------");
     int argument = get_arg(argc, argv);
 
     if (argument == 1) { //erreur dans les arguments
@@ -243,16 +244,20 @@ int main(int argc, char *argv[]){
         }
 
         temp = lproc;
-        while (temp->next && (temp->PID < selected_proc->PID)){
-            temp = temp->next;
-        }
+        
 
         if (!temp) {
             state.is_running = -1;
         } else {
-            selected_proc = temp;
+            while (temp->next && (temp->PID < selected_proc->PID)){
+                temp = temp->next;
+            }
+            if (!temp) {
+                selected_proc = lproc;
+            } else {
+                selected_proc = temp;
+            }
         }
-
         wrefresh(main_work);
     }
 
@@ -267,16 +272,9 @@ int main(int argc, char *argv[]){
     }
 
     if (state.is_running == -1) {
-        FILE *log = fopen(".log", "a");
-        if (!log) {
-            // éventuellement fallback sur stderr
-            fprintf(stderr, "Can't open log file\n");
-            return 1;
-        }
-        fprintf(log, "Erreur app\n");
-        fclose(log);
+        write_log("Erreur app");
     }
 
-    printf("LP25 Fini\n");
+    write_log("LP25 Fini\n");
     return 0;
 }
