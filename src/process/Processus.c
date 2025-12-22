@@ -259,7 +259,7 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
             snprintf(pid, sizeof(pid), "%d", temp->PID);
             if (strcmp(list_dir[i], pid) == 0) {
                 find = 1;
-                if (get_time(list_dir[i], temp, connexion, state) != 0) {
+                if(get_time(list_dir[i], temp, connexion, state) != 0){
                     write_log("ERROR : get_time for %s", pid);
                 }
             }
@@ -301,7 +301,7 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
         if (find == 0) {
             char *pid =  list_dir[i];
             proc *new = get_info(pid, state, connexion);
-            if ( new != NULL) {
+            if (new != NULL) {
                 *lproc = add_queue_proc(*lproc, new);
             }
         }

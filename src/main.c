@@ -215,6 +215,7 @@ int main(int argc, char *argv[]) {
         state.current_server = state.server_list; // on commence par le premier serveur distant
     } else {
         state.current_server = NULL; // sécurité 
+
     }
 
     // pre-charge la liste initiale selon la machine choisie
@@ -239,8 +240,10 @@ int main(int argc, char *argv[]) {
     proc *temp = NULL;
 
     while (state.is_running) {
-        int ch = wgetch(main_work); 
-
+        err = 0;
+        int ch = wgetch(main_work);
+        
+        // on compte le nb total de processus
         getmaxyx(main_work, max_y, max_x);
 
         // --- Gestion des touches  ---
@@ -354,12 +357,28 @@ int main(int argc, char *argv[]) {
             selected_proc = lproc; 
         }
 
+        write_log("ReadKey : OK");
+
         draw_ui(main_work, &state, lproc, selected_proc);
         dirs = get_list_dirs("/proc");
         update_l_proc(&lproc, NULL, dirs, LOCAL);
         if (!lproc) {
             state.is_running = 0;
+        if (!dirs) {
+            write_log("Dir : NO");
+            return 3;
         }
+        write_log("Dir : OK");
+        err = update_l_proc(&lproc, NULL, dirs, LOCAL);
+        if (err != 0) {
+            state.is_running = 4;
+            write_log("ERROR : update");
+        }
+        if (!lproc) {
+            state.is_running = 5;
+            break;
+        }
+        write_log("Update : OK");
 
         temp = lproc;
         while (temp && (temp->PID < selected_proc->PID)){
@@ -367,12 +386,12 @@ int main(int argc, char *argv[]) {
         }
 
         if (!temp) {
-            state.is_running = 0;
+            state.is_running = 6;
         } else {
             selected_proc = temp;
         }
         wrefresh(main_work);
-
+        write_log("End loop");
     }
 
     // on nettoie !
