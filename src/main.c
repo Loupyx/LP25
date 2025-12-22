@@ -271,7 +271,6 @@ int main(int argc, char *argv[]){
         }
         wrefresh(main_work);
     }
-    //usleep(10000); // AJOUTE CECI pour ne pas saturer le CPU et laisser du temps au rendu
 
     // on nettoie !
     endwin();
