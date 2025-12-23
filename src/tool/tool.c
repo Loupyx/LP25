@@ -48,6 +48,7 @@ char *get_char_file(char *path) {
         write_log("Error fopen for : %s", path);
         return NULL;
     }
+
     while ((ic = fgetc(file)) != EOF) {
         c = (char)ic;
         if (c != '\n') {

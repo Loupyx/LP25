@@ -113,8 +113,21 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
         }
         int window_size = max_y - 2;
 
-        mvprintw(2, 0, "appuyer sur une touche F (F1 à F8) ou q pour quitter ");
-        mvprintw(4, 0, "voici la derniere touche detectee : %s", state->last_key_pressed);
+        mvprintw(2, 0, "Appuyer sur une touche F (F1 à F8) ou q pour quitter ");
+        // partie qui affiche dynamiquement l'état des actions realisées sur les processus 
+        if (strstr(state->last_key_pressed, "SUCCES")) {
+            attron(A_BOLD);
+            mvprintw(4, 0, "STATUT : %-60s", state->last_key_pressed);
+            attroff(A_BOLD);
+        } else if (strstr(state->last_key_pressed, "ERREUR")) {
+            attron(A_STANDOUT | A_BOLD); 
+            mvprintw(4, 0, "ALERTE : %-60s", state->last_key_pressed);
+            attroff(A_STANDOUT | A_BOLD);
+        } else {
+            // affichage par défaut si aucune action spéciale n'est en cours
+            mvprintw(4, 0, "Derniere action : %-60s", state->last_key_pressed);
+        }
+
         mvwprintw(work, 5, 0, "Nombre processus : %d ", total_proc);
         mvwprintw(work, 6, 0, "PID\tPPID\tUSER\t\t\t\tCPU\tSTATE\tCMD");
 
@@ -159,7 +172,7 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
 
 
 /*gere les entrees du clavier et met a jour l'etat avec le parametre state (etat actuel du prog a modif)*/
-void handle_input(programme_state *state, int key){
+void handle_input(programme_state *state, int key, list_proc *lproc){
     const char *key_name = NULL;
     pid_t target_pid = state->selected_pid;
     int erreur;
@@ -228,8 +241,14 @@ void handle_input(programme_state *state, int key){
                     break;
                 
                 case KEY_F(5):
-                    key_name = "F5 (pause processus)";
-                    send_process_action(target_pid, SIGSTOP, "Pause");     
+                    key_name = "F5 (Pause)";
+                    erreur = send_process_action(target_pid, SIGSTOP, "Pause");
+                    if (erreur == 0) {
+                    // ON MET SEULEMENT LE MESSAGE, LE MAIN FERA L'UPDATE
+                    snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "SUCCES : PID %d mis en pause", target_pid);
+                    } else {
+                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "ERREUR : Echec sur PID %d", target_pid);
+                    }
                     break;
                 case KEY_F(6):
                     key_name = "F6 (arret processus)";
@@ -253,15 +272,17 @@ void handle_input(programme_state *state, int key){
                     key_name = "Flèche/pavier haut";
                     break;
                 default:
-                    // Pour toutes les autres touches
-                    snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "autre touche : code = %d", key);
-                    return; // on affiche le code
+                    // on ne met pas de return ici pour laisser le code du bas s'exécuter
+                    snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "Code touche : %d", key);
+                    key_name = NULL; //pour ne pas écraser le snprintf ci-dessus
+                    break;
             }
-    }
+    } // fin du switch 
 
-    /*met a jour l'etat du programme avec le nom de la touche (pour l'affichage)*/
-    if  (key_name){
-        strncpy(state->last_key_pressed, key_name,sizeof(state->last_key_pressed) - 1);
-        state->last_key_pressed[sizeof(state->last_key_pressed) - 1] = '\0';
+    // MISE À JOUR FINALE DU MESSAGE (seulement si on n'a pas déjà un message SUCCES/ERREUR)
+    if (key_name != NULL) {
+        if (!strstr(state->last_key_pressed, "SUCCES") && !strstr(state->last_key_pressed, "ERREUR")) {
+             strncpy(state->last_key_pressed, key_name, sizeof(state->last_key_pressed) - 1);
+        }
     }
 }

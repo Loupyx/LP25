@@ -209,18 +209,30 @@ int main(int argc, char *argv[]){
     proc *temp = NULL;
 
     while (state.is_running) {
-        err = 0;
-        int ch = wgetch(main_work);
-        
-        // on compte le nb total de processus
+        int ch = wgetch(main_work); 
+
         getmaxyx(main_work, max_y, max_x);
 
+        // --- Gestion des touches  ---
         if (ch != ERR) {
-            // on lit les touches
-            char old_key[64];
-            strcpy(old_key, state.last_key_pressed);
-            handle_input(&state, ch);
+            handle_input(&state, ch, &lproc);
+            char *lkp = state.last_key_pressed;
+
+            if (ch == KEY_UP || strstr(lkp, "Flèche/pavier haut") != NULL) {
+                if (selected_proc && selected_proc->prev != NULL) {
+                    selected_proc = selected_proc->prev;
+                }
+                strncpy(state.last_key_pressed, "Navigation : HAUT", sizeof(state.last_key_pressed));
+            }
+            else if (ch == KEY_DOWN || strstr(lkp, "Flèche/pavier bas") != NULL) {
+                if (selected_proc && selected_proc->next != NULL) {
+                    selected_proc = selected_proc->next;
+                }
+                strncpy(state.last_key_pressed, "Navigation : BAS", sizeof(state.last_key_pressed));
+            }
         }
+
+
         char *lkp = state.last_key_pressed;
         // flèche haut
         if (strstr(lkp, "Flèche/pavier haut") != NULL){ //fleche haut
@@ -270,6 +282,32 @@ int main(int argc, char *argv[]){
             }
         }
         wrefresh(main_work);
+
+        // --- Mises à jour des infos des processus ---
+        char **new_dirs = get_list_dirs("/proc");
+        if (new_dirs) {
+            update_l_proc(&lproc, NULL, new_dirs, LOCAL);
+            destoy_char(new_dirs);
+        }
+
+        // --- Securité anti-crash pour que le pointeur ne se retrouve pas dans le vide et donc fait crasher le projet  ---
+        int found = 0;
+        proc *check = lproc;
+        while (check) {
+            if (check == selected_proc) {
+                found = 1;
+                break;
+            }
+            check = check->next;
+        }
+
+        if (!found) {
+            // au lieu de mettre le curseur tout en haut on le garde ou il etait 
+            // si lproc est vide, selected_proc devient NULL (sécurité totale)
+            selected_proc = lproc; 
+        }
+
+        draw_ui(main_work, &state, lproc, selected_proc);
     }
 
     // on nettoie !

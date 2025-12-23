@@ -53,7 +53,7 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
  *
  * \param state État du programme à modifier en fonction des touches pressées.
  */
-void handle_input(programme_state *state, int key);
+void handle_input(programme_state *state, int key, list_proc *lproc);
 
 
 #endif
