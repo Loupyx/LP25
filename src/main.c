@@ -238,15 +238,12 @@ int main(int argc, char *argv[]){
             strcpy(state.last_key_pressed, "");
         }
 
-        write_log("ReadKey : OK");
-
         draw_ui(main_work, &state, lproc, selected_proc);
         dirs = get_list_dirs("/proc");
         if (!dirs) {
             write_log("Dir : NO");
             return 3;
         }
-        write_log("Dir : OK");
         err = update_l_proc(&lproc, NULL, dirs, LOCAL);
         if (err != 0) {
             state.is_running = 4;
@@ -256,11 +253,11 @@ int main(int argc, char *argv[]){
             state.is_running = 5;
             break;
         }
-        write_log("Update : OK");
 
         temp = lproc;
 
         if (!temp) {
+            write_log("ERROR : update return a empty list");
             state.is_running = 6;
         } else {
             while (temp->next && (temp->PID < selected_proc->PID)){
@@ -273,7 +270,6 @@ int main(int argc, char *argv[]){
             }
         }
         wrefresh(main_work);
-        write_log("End loop");
     }
 
     // on nettoie !
