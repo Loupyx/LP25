@@ -9,6 +9,7 @@
  * Types d'accès possibles à une machine distante ou locale.
  */
 enum acces_type{
+    NONE,   /**< Gestion erreur */
     SSH,    /**< Accès via le protocole SSH. */
     LOCAL,  /**< Accès local (sur la machine courante). */
     TELNET, /**< Accès via le protocole Telnet. */

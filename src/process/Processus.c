@@ -56,7 +56,7 @@ void print_l_proc(list_proc l) {
     }
 }
 
-proc* create_proc() {
+proc *create_proc() {
     //initialisation d'un nouveau processus
     proc *new_proc = (proc*)calloc(1, sizeof(proc));
     if (!new_proc) {
@@ -126,15 +126,15 @@ int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state) {
 
     utime = atol(data[14]);
     stime = atol(data[15]);
-    ttime = utime + stime;
+    ttime = utime+stime;
 
     ticks_per_sec = sysconf(_SC_CLK_TCK);
 
     n_update_time = time(NULL);
-    dt = n_update_time - p->update_time; // delta temps en s
+    dt = n_update_time-p->update_time; // delta temps en s
 
     // temps CPU total (user+system) en secondes depuis le démarrage du processus
-    sec = (double)ttime / (double)ticks_per_sec;
+    sec = (double)ttime/(double)ticks_per_sec;
 
     prev_time = p->time;  // ancienne valeur en secondes
     p->time = sec;        // nouvelle valeur
@@ -142,10 +142,10 @@ int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state) {
 
     if (dt > 0.1) {
         // différence de ticks CPU entre les deux mesures
-        dtick = (long)((sec - prev_time) * (double)ticks_per_sec);
+        dtick = (long)((sec-prev_time)*(double)ticks_per_sec);
 
-        cpu = (double)dtick / (double)(dt * ticks_per_sec);
-        p->CPU = cpu * 100.0;
+        cpu = (double)dtick/(double)(dt*ticks_per_sec);
+        p->CPU = cpu*100.0;
     }
 
     p->update_time = n_update_time;

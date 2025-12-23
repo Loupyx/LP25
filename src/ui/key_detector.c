@@ -44,7 +44,6 @@ WINDOW *initialize_ncurses() {
     return work;
 }
 
-
 /*dessine le contenu du panneau d'aide*/
 void draw_help(int max_y, int max_x) {
     mvprintw(2, 5, "--- Aide : Raccourcis Clavier ---");

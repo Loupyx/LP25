@@ -146,30 +146,31 @@ int get_arg(int argc, char *argv[]) {
                 password = strdup(buf);
             }
         }
-    }
-
-    // Si l'utilisateur a donné login user@server et pas de password
-    if (login != NULL && password == NULL) {
+    } else if (login != NULL) {
         char *at = strchr(login, '@'); // cherche le caractère '@' dans login
         if (at && username == NULL) {
-            *at = 0; // coupe la chaîne à '@'
+            *at = '\0'; // coupe la chaîne à '@'
             username = strdup(login); // username = partie avant '@'
-            login = at + 1;        // login = partie après '@'
+            remote_server = at + 1;        // login = partie après '@'
         }
-        printf("Entrez le mot de passe pour %s@%s : ", username, login);
-        char buf[128];
-        if (fgets(buf, sizeof(buf), stdin)) {
-            buf[strcspn(buf, "\n")] = 0; // supprime le retour à la ligne
-            password = strdup(buf); // stocke le mot de passe
+        if (password == NULL) {
+            printf("Entrez le mot de passe pour %s@%s : ", username, remote_server);
+            char buf[128];
+            if (fgets(buf, sizeof(buf), stdin)) {
+                buf[strcspn(buf, "\n")] = 0; // supprime le retour à la ligne
+                password = strdup(buf); // stocke le mot de passe
+            }
         }
+        
     }
-    return 0;
+    return -2;
 }
 
 int main(int argc, char *argv[]) {
     write_log("--------------------Init new session----------------------");
     int argument = get_arg(argc, argv);
-    int err = 0;
+    int err;
+    int acces = NONE;
 
     if (argument == 1) { //erreur dans les arguments
         return 1;
@@ -178,6 +179,35 @@ int main(int argc, char *argv[]) {
     if (argument == -1) { //pas de probleme mais on execute rien rien
         return 0;
     }
+    if (connexion_type == NULL) {
+        acces = LOCAL;
+    } else if (strcmp("ssh", connexion_type) == 0) {
+        acces = SSH;
+    } else if (strcmp("telnet", connexion_type) == 0) {
+        acces = TELNET;
+    } else {
+        return 1;
+    }
+
+    write_log("fin argument");
+
+    if (argument == -2) {
+        list_serv l = NULL;
+
+        printf("%d\n", acces);
+
+        server *test = create_serve_arg(port, acces, remote_server, username, password);
+        if (!test) {
+            write_log("echec création server");
+            return 1;
+        }
+        write_log("création du server");
+
+        l = add_queue(l, test);
+        print_list_serv(l);
+    }
+
+    
 
     WINDOW *main_work;
     programme_state state = {.is_running = 1};
@@ -210,7 +240,7 @@ int main(int argc, char *argv[]) {
     } else {
         state.current_server = NULL; // sécurité 
     }
-
+    
     // pre-charge la liste initiale selon la machine choisie
     list_proc lproc = NULL;
     if (state.current_server == NULL) {
