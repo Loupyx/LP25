@@ -38,15 +38,15 @@ proc *add_queue_proc(proc *list, proc *p) {
 }
 
 void print_proc(proc *p) {
-    fprintf(stderr,
-        "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\nupdate : %ld\n",
-        p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU,p->vsize, p->time, p->update_time);
-
+    write_log(
+        "------------------------------------\nPID : %d \tPPID : %d\tUser : %s\tcmdline : %s\tState : %c\tCPU : %.3f\tVsize : %ldko\tTIME : %.2f\nupdate : %ld",
+        p->PID, p->PPID, p->user, p->cmdline,p->state, p->CPU,p->vsize, p->time, p->update_time
+    );
 }
 
 void print_l_proc(list_proc l) {
     if (!l) {
-        printf("Liste NULL\n");
+        write_log("Liste NULL");
         return;
     }
     list_proc temp = l;
@@ -60,17 +60,17 @@ proc* create_proc() {
     //initialisation d'un nouveau processus
     proc *new_proc = (proc*)calloc(1, sizeof(proc));
     if (!new_proc) {
-        fprintf(stderr, "new_proc\n");
+        write_log("ERROR : new_proc");
         return NULL;
     }
     new_proc->cmdline = (char*)calloc(SIZE_CHAR,sizeof(char));
     if (!new_proc->cmdline) {
-        fprintf(stderr, "cmdline\n");
+        write_log("ERROR : cmdline");
         return NULL;
     }
     new_proc->user = (char*)malloc(SIZE_CHAR*sizeof(char));
     if (!new_proc->user) {
-        fprintf(stderr, "user\n");
+        write_log("ERROR : user");
         return NULL;
     }
     new_proc->next = NULL;
@@ -81,7 +81,7 @@ proc* create_proc() {
 char *get_char(char *pid, char *file, enum acces_type connexion, ssh_state *state) {
     char path[SIZE_CHAR], *text;
     if (connexion == SSH && state == NULL) {
-        fprintf(stderr, "SSH_STATE NULL in *get_stat for PID : %s\n", pid);
+        write_log("SSH_STATE NULL in *get_stat for PID : %s", pid);
         return NULL;
     }
     snprintf(path, sizeof(path), "/proc/%s/%s", pid, file);
@@ -97,49 +97,57 @@ char *get_char(char *pid, char *file, enum acces_type connexion, ssh_state *stat
             text = get_char_telnet();
             break;
         default:
-            fprintf(stderr, "Wrong connexion type\n");
+            write_log("Wrong connexion type");
             return NULL;
             break;
     }
     if (!text) {
-        fprintf(stderr, "Cannot get char for : %s\n", path);
+        write_log("Cannot get char for : %s", path);
     }
     return text;
 }
 
 int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state){
     char *unformated, **data;
-    long utime, stime, ticks_per_sec = sysconf(_SC_CLK_TCK), ttime, ptime, dtick;
+    long utime, stime, ticks_per_sec = sysconf(_SC_CLK_TCK), ttime, dtick;
     double sec, cpu;
+    double prev_time; // ancienne valeur en secondes
     time_t dt, n_update_time;
 
     unformated = get_char(pid, "stat", connexion, state);
-    if(!unformated){
+    if (!unformated)
         return 1;
-    }
+
     data = split(unformated, ' ');
     free(unformated);
-    if(!data || !data[0]){
+    if (!data || !data[0])
         return 1;
-    }
+
     utime = atol(data[14]);
     stime = atol(data[15]);
-    n_update_time = time(NULL);
-    dt = n_update_time - p->update_time; //delta du temps en s
-    ttime = utime+stime;
+    ttime = utime + stime;
+
     ticks_per_sec = sysconf(_SC_CLK_TCK);
-    sec = (double)ttime/(double)ticks_per_sec;
-    ptime = p->time;
-    p->time = sec;
+
+    n_update_time = time(NULL);
+    dt = n_update_time - p->update_time; // delta temps en s
+
+    // temps CPU total (user+system) en secondes depuis le démarrage du processus
+    sec = (double)ttime / (double)ticks_per_sec;
+
+    prev_time = p->time;  // ancienne valeur en secondes
+    p->time = sec;        // nouvelle valeur
     destoy_char(data);
 
-    ptime = p->time;
+    if (dt > 0.1) {
+        // différence de ticks CPU entre les deux mesures
+        dtick = (long)((sec - prev_time) * (double)ticks_per_sec);
 
-    dtick = ttime - ptime*(double)ticks_per_sec;
-    cpu = (double)dtick/(double)(dt*ticks_per_sec);
-    p->CPU = cpu*100;
+        cpu = (double)dtick / (double)(dt * ticks_per_sec);
+        p->CPU = cpu * 100.0;
+    }
+
     p->update_time = n_update_time;
-
     return 0;
 }
 
@@ -147,19 +155,19 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
     char **data, *unformated;
     proc *new = create_proc();
     if (!new) {
-        fprintf(stderr, "Can't alloc new in get_all_proc\n");
+        write_log("Can't alloc new in get_all_proc");
         return NULL;
     }
 
     unformated = get_char(pid, "stat", connexion, state);
     if (!unformated) {
-        fprintf(stderr, "return NULL to unformated for : %s\n", pid);
+        write_log("return NULL to unformated for : %s", pid);
         return NULL;
     }
     data = split(unformated, ' ');
 
     if (!data || !data[0]) {
-        fprintf(stderr, "split returned empty for '%s'\n", unformated);
+        write_log("split returned empty for '%s'", unformated);
         return NULL;
     }
     free(unformated);
@@ -173,20 +181,20 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
     int error = get_time(pid, new, connexion, state);
 
     if(error == 1){
-        fprintf(stderr, "erreur get_time for %d", new->PID);
+        write_log("erreur get_time for %d", new->PID);
         return NULL;
     }
 
     unformated = get_char(pid, "status", connexion, state);
     if (!unformated) {
-        fprintf(stderr, "return NULL to unformated for : %s\n", pid);
+        write_log("return NULL to unformated for : %s", pid);
         free(new);
         return NULL;
     }
     data = split(unformated, '\t');
 
     if (!data || !data[0]) {
-        fprintf(stderr, "split returned empty for '%s'\n", unformated);
+        write_log("split returned empty for '%s'", unformated);
         free(new);
         return NULL;
     }
@@ -196,7 +204,7 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
         int transpho = atoi(temp[9]);
         struct passwd *pw = getpwuid(transpho);
         if (!pw || !pw->pw_name) { 
-            fprintf(stderr, "error pw\n");
+            write_log("error pw");
             free(new);
             return NULL;
         }
@@ -204,21 +212,20 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
     }
 
     new->update_time = time(NULL);
-
     return new;
 }
 
 //implémentation de l'envoi du signal au processus
 int send_process_action(pid_t pid, int action_signal, const char *action_name) {
     if (pid <= 1) {
-        //fprintf(stderr, "erreur action : PID invalide (%d)\n", pid);
+        //write_log("erreur action : PID invalide (%d)", pid);
         return -1;
     }
     if (kill(pid, action_signal) == 0) {
-        //fprintf(stderr, "Succes : action '%s' envoyée au PID %d\n", action_name, pid );
+        //write_log("Succes : action '%s' envoyée au PID %d", action_name, pid );
         return 0;
     } else {
-        //fprintf(stderr, "erreur lors de l'envoie du signal %s au PID %d: %s\n",action_name, pid, strerror(errno));
+        //write_log("erreur lors de l'envoie du signal %s au PID %d: %s",action_name, pid, strerror(errno));
         return -1;
     }
 }
@@ -238,6 +245,9 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
 }
 
 int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acces_type connexion) {
+    if (!list_dir) {
+        return -1;
+    }
     proc *temp = *lproc;
     while (temp) {
         int find = 0;
@@ -245,11 +255,9 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
             char pid[32];
             snprintf(pid, sizeof(pid), "%d", temp->PID);
             if (strcmp(list_dir[i], pid) == 0) {
-                if(get_time(list_dir[i], temp, connexion, state) == 0){
-                    find = 1;
-                    break;
-                } else {
-                    break;
+                find = 1;
+                if(get_time(list_dir[i], temp, connexion, state) != 0){
+                    write_log("ERROR : get_time for %s", pid);
                 }
             }
         }
@@ -282,6 +290,7 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
             snprintf(pid, sizeof(pid), "%d", temp->PID);
             if (strcmp(list_dir[i], pid) == 0) {
                 find = 1;
+                break;
             }
             temp=temp->next;
         }
@@ -289,9 +298,10 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
         if (find == 0) {
             char *pid =  list_dir[i];
             proc *new = get_info(pid, state, connexion);
-            *lproc = add_queue_proc(*lproc, new);
+            if (new != NULL) {
+                *lproc = add_queue_proc(*lproc, new);
+            }
         }
     }
-
     return 0;
 }
