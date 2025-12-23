@@ -24,7 +24,7 @@ typedef struct {
     int   port;            /**< Port utilisé pour la connexion. */
     char *username;        /**< Nom d'utilisateur pour l'authentification. */
     char *password;        /**< Mot de passe pour l'authentification. */
-    char *connexion_type;  /**< Type de connexion (par ex. TCP, UDP, SSH...). */
+    int connexion_type;  /**< Type de connexion (par ex. TELNET, SSH...). */
 } server;
 
 /**
@@ -36,7 +36,7 @@ typedef struct {
 typedef struct maillon_s {
     server *serv;            /**< Serveur stocké dans ce maillon. */
     struct maillon_s *next;  /**< Pointeur vers le maillon suivant. */
-    struct maillon_s *prev; /**< Pointeur vers le maillon précédent */
+    struct maillon_s *prev;  /**< Pointeur vers le maillon précédent */
 } maillon;
 
 /**
@@ -48,6 +48,21 @@ typedef struct maillon_s {
 typedef maillon *list_serv;
 
 /**
+ * Crée un serveur à partir des paramètres fournis.
+ *
+ * Alloue et initialise une structure server avec les informations
+ * de connexion données (port, type, adresse, utilisateur, mot de passe).
+ *
+ * \param port     Port du serveur.
+ * \param type     Type de connexion (SSH, LOCAL, TELNET).
+ * \param serv     Adresse ou nom du serveur.
+ * \param user     Nom d'utilisateur.
+ * \param password Mot de passe.
+ * \return Pointeur vers la structure server créée, ou NULL en cas d'erreur.
+ */
+server *create_serve_arg(int port, int type, char *serv, char *user, char *password);
+
+/**
  * Lit un fichier de configuration et construit la liste de serveurs.
  *
  * \param path c'est le chemin vers le fichier de configuration.
@@ -57,11 +72,15 @@ typedef maillon *list_serv;
 list_serv get_serveur_config(char *path, int *error);
 
 /**
- * Affiche un message d'erreur formaté sur la sortie appropriée.
+ * Ajoute un serveur à la fin de la liste chaînée de serveurs.
  *
- * \param mess Message d'erreur à afficher.
+ * Insère le serveur fourni en fin de liste (comportement FIFO/queue).
+ *
+ * \param list Tête actuelle de la liste de serveurs (peut être NULL).
+ * \param serv Pointeur vers le serveur à ajouter.
+ * \return Nouvelle tête de liste (inchangée ou mise à jour selon l'implémentation).
  */
-void print_error(char mess[]);
+list_serv add_queue(list_serv list, server *serv);
 
 /**
  * Affiche le contenu d'une liste de serveurs.

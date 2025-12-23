@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "network_main.h"
+#include "./../process/Processus.h"
+#include "./../tool/tool.h"
 
 list_serv add_queue(list_serv list, server *serv) {     
     maillon *new = (maillon*)malloc(sizeof(maillon));
@@ -100,8 +102,11 @@ list_serv get_serveur_config(char *path, int *error) {
                         strcpy(new->password, word);
                         break;
                     case 6:
-                        new->connexion_type = (char*)malloc(size + 1);
-                        strcpy(new->connexion_type, word);
+                        if (strcmp(word, "SSH")) {
+                            new->connexion_type = SSH;
+                        } else if (strcmp(word, "TELNET")) {
+                            new->connexion_type = TELNET;
+                        }
                         break;
                     default:
                         break;
@@ -130,9 +135,50 @@ list_serv get_serveur_config(char *path, int *error) {
     return list;
 }
 
-void print_error(char mess[]) {
-    printf("%s\n", mess);
-    fflush(stdout);
+server *create_serve_arg(int port, int type, char *serv, char *user, char *password) {
+    server *new = (server*)malloc(sizeof(server));
+    if (!new) {
+        return NULL;
+    }
+
+    if (type == LOCAL) {
+        new->adresse = "localhost";
+        new->connexion_type = LOCAL;
+        new->name = "MonPC";
+        new->password = NULL;
+        new->port = -1;
+        new->username = NULL;
+        return new;
+    }
+
+    new->port = port;
+    new->connexion_type = type;
+
+    if (port == -1) {
+        switch (type) {
+            case SSH:
+                new->port = 22;
+                break;
+
+            case TELNET:
+                new->port = 23;
+                break;
+            
+            default:
+                free(new);
+                return NULL;
+        }
+    }
+
+    new->adresse = (char*)malloc(strlen(serv)+1);
+    strcpy(new->adresse, serv);
+    new->name = (char*)malloc(strlen(serv)+1);
+    strcpy(new->name, serv);
+    new->username = (char*)malloc(strlen(user)+1);
+    strcpy(new->username, user);
+    new->password = (char*)malloc(strlen(password)+1);
+    strcpy(new->password, password);
+    return new;
 }
 
 void print_list_serv(list_serv l) {
@@ -140,15 +186,13 @@ void print_list_serv(list_serv l) {
     int i = 1;
     while (temp != NULL) {
         server *s = temp->serv;
-        printf("Serveur %d:\n", i);
-        printf("  name           : %s\n", s->name);
-        printf("  adresse        : %s\n", s->adresse);
-        printf("  port           : %d\n", s->port);
-        printf("  username       : %s\n", s->username);
-        printf("  password       : %s\n", s->password);
-        printf("  connexion_type : %s\n", s->connexion_type);
-        printf("\n");
-
+        write_log("Serveur %d:", i);
+        write_log("  name           : %s", s->name);
+        write_log("  adresse        : %s", s->adresse);
+        write_log("  port           : %d", s->port);
+        write_log("  username       : %s", s->username);
+        write_log("  password       : %s", s->password);
+        write_log("  connexion_type : %d", s->connexion_type);
         temp = temp->next;
         i++;
     }
@@ -160,7 +204,6 @@ void destroy_server(server *serv) {
         free(serv->adresse);
         free(serv->username);
         free(serv->password);
-        free(serv->connexion_type);
+        free(serv);
     }
-    free(serv);
 }

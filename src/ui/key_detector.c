@@ -13,9 +13,9 @@ extern int max_y, max_x;
 /*initilisation de ncurses
 WINDOW* est un pointeur vers la fenetre principale (stdscr)*/
 
-WINDOW *initialize_ncurses(){
+WINDOW *initialize_ncurses() {
     WINDOW *work = initscr();
-    if (work == NULL){
+    if (work == NULL) {
         write_log("erreur lors de l'initialisation de ncurses");
         return NULL;
     }
@@ -28,7 +28,7 @@ WINDOW *initialize_ncurses(){
 }
 
 /*creation de l'interface avec comme parametre work (fonction ncurses) et programm_state (etat du programme)*/
-void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *selected_proc){
+void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *selected_proc) {
     int window_size = max_y - 2;
     int total_proc = 0;
     proc *tmp = lproc;
@@ -71,12 +71,12 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
 }
 
 /*gere les entrees du clavier et met a jour l'etat avec le parametre state (etat actuel du prog a modif)*/
-void handle_input(programme_state *state, int key){
+void handle_input(programme_state *state, int key) {
     const char *key_name = NULL;
     pid_t target_pid = state->selected_pid;
     int erreur;
 
-    switch (key){       //creation des cas en fonction des touches pressees
+    switch (key) {       //creation des cas en fonction des touches pressees
         case KEY_F(1):
             key_name = "F1 (aide)\n";
             break;
@@ -123,16 +123,16 @@ void handle_input(programme_state *state, int key){
             return; //on affiche le code 
     }
 
-    if (erreur == -1){
+    if (erreur == -1) {
         mvprintw(max_y - 2, 0, "Erreur envoie signal à %d pour %s", target_pid, key_name);
     }
 
-    if (erreur == 0){
+    if (erreur == 0) {
         mvprintw(max_y - 2, 0, "Envoie signal à %d pour %s réussi", target_pid, key_name);
     }
 
     /*met a jour l'etat du programme avec le nom de la touche*/
-    if  (key_name){
+    if  (key_name) {
         strncpy(state->last_key_pressed, key_name,sizeof(state->last_key_pressed) - 1);
         state->last_key_pressed[sizeof(state->last_key_pressed) - 1] = '\0';
     }

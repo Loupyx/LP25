@@ -38,7 +38,7 @@ struct option long_options[] = {
     {0, 0, 0, 0} // stop
 };
 
-int get_arg(int argc, char *argv[]){
+int get_arg(int argc, char *argv[]) {
 
     while ((opt = getopt_long(argc, argv, "hc:t:P:l:s:u:p:a", long_options, NULL)) != -1) {
         switch (opt) {
@@ -98,6 +98,10 @@ int get_arg(int argc, char *argv[]){
         }
     }
 
+    if (all == 1 && (remote_config == NULL && remote_server == NULL)) {
+        printf("-a doit être activé avec -c ou -s\n");
+    }
+
     // Gestion du fichier de configuration distant
     if (remote_config == NULL) {
         remote_config = ".config"; // nom par défaut
@@ -148,30 +152,31 @@ int get_arg(int argc, char *argv[]){
                 password = strdup(buf);
             }
         }
-    }
-
-    // Si l'utilisateur a donné login user@server et pas de password
-    if (login != NULL && password == NULL) {
+    } else if (login != NULL) {
         char *at = strchr(login, '@'); // cherche le caractère '@' dans login
         if (at && username == NULL) {
-            *at = 0; // coupe la chaîne à '@'
+            *at = '\0'; // coupe la chaîne à '@'
             username = strdup(login); // username = partie avant '@'
-            login = at + 1;        // login = partie après '@'
+            remote_server = at + 1;        // login = partie après '@'
         }
-        printf("Entrez le mot de passe pour %s@%s : ", username, login);
-        char buf[128];
-        if (fgets(buf, sizeof(buf), stdin)) {
-            buf[strcspn(buf, "\n")] = 0; // supprime le retour à la ligne
-            password = strdup(buf); // stocke le mot de passe
+        if (password == NULL) {
+            printf("Entrez le mot de passe pour %s@%s : ", username, remote_server);
+            char buf[128];
+            if (fgets(buf, sizeof(buf), stdin)) {
+                buf[strcspn(buf, "\n")] = 0; // supprime le retour à la ligne
+                password = strdup(buf); // stocke le mot de passe
+            }
         }
+        
     }
-    return 0;
+    return -2;
 }
 
 int main(int argc, char *argv[]){
     write_log("--------------------Init new session----------------------");
     int argument = get_arg(argc, argv);
     int err;
+    int acces = NONE;
 
     if (argument == 1) { //erreur dans les arguments
         return 1;
@@ -180,6 +185,35 @@ int main(int argc, char *argv[]){
     if (argument == -1) { //pas de probleme mais on execute rien rien
         return 0;
     }
+    if (connexion_type == NULL) {
+        acces = LOCAL;
+    } else if (strcmp("ssh", connexion_type) == 0) {
+        acces = SSH;
+    } else if (strcmp("telnet", connexion_type) == 0) {
+        acces = TELNET;
+    } else {
+        return 1;
+    }
+
+    write_log("fin argument");
+
+    if (argument == -2) {
+        list_serv l = NULL;
+
+        printf("%d\n", acces);
+
+        server *test = create_serve_arg(port, acces, remote_server, username, password);
+        if (!test) {
+            write_log("echec création server");
+            return 1;
+        }
+        write_log("création du server");
+
+        l = add_queue(l, test);
+        print_list_serv(l);
+    }
+
+    
 
     WINDOW *main_work;
     programme_state state = {.is_running = 1};
@@ -189,7 +223,7 @@ int main(int argc, char *argv[]){
     strcpy(state.last_key_pressed, "aucune");
     state.selected_pid = 0;
     main_work = initialize_ncurses();
-    if (main_work == NULL){
+    if (main_work == NULL) {
         return 1;
     }
     wtimeout(main_work, tout); //definition du refresh 
@@ -202,7 +236,11 @@ int main(int argc, char *argv[]){
         if (err != 0) {
             endwin();
             printf("ERREUR: get_all_proc = %d\n", err);
-            return 2;
+            return 1;
+        } else if (dry_run == 1) {
+            endwin();
+            printf("Dry-run OK\n");
+            return 0;
         }
     }
     proc *selected_proc = lproc;
@@ -223,7 +261,7 @@ int main(int argc, char *argv[]){
         }
         char *lkp = state.last_key_pressed;
         // flèche haut
-        if (strstr(lkp, "Flèche/pavier haut") != NULL){ //fleche haut
+        if (strstr(lkp, "Flèche/pavier haut") != NULL) { //fleche haut
             if (selected_proc->prev != NULL) {
                 selected_proc = selected_proc->prev;
             }
@@ -260,7 +298,7 @@ int main(int argc, char *argv[]){
             write_log("ERROR : update return a empty list");
             state.is_running = 6;
         } else {
-            while (temp->next && (temp->PID < selected_proc->PID)){
+            while (temp->next && (temp->PID < selected_proc->PID)) {
                 temp = temp->next;
             }
             if (!temp) {

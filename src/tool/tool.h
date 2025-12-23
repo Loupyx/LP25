@@ -102,5 +102,15 @@ void print_str_array(char **tab);
  */
 void destoy_char(char *line[]);
 
+/**
+ * Écrit un message dans le fichier de log avec formatage variable.
+ *
+ * Utilise un système de formatage à la printf pour écrire des messages
+ * horodatés dans un fichier de log (avec gestion des niveaux de verbosité
+ * si implémenté).
+ *
+ * \param text Format du message (comme printf), suivi d'arguments variables.
+ * \return 0 en cas de succès, une valeur non nulle en cas d'erreur d'écriture.
+ */
 int write_log(const char *text, ...);
 #endif
