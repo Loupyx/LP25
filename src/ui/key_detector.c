@@ -244,15 +244,21 @@ void handle_input(programme_state *state, int key, list_proc *lproc){
                     key_name = "F5 (Pause)";
                     erreur = send_process_action(target_pid, SIGSTOP, "Pause");
                     if (erreur == 0) {
-                    // ON MET SEULEMENT LE MESSAGE, LE MAIN FERA L'UPDATE
+                    // utilise SIGSTOP pour mettre en pause un processus (T)
                     snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "SUCCES : PID %d mis en pause", target_pid);
                     } else {
                         snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "ERREUR : Echec sur PID %d", target_pid);
                     }
                     break;
                 case KEY_F(6):
-                    key_name = "F6 (arret processus)";
-                    send_process_action(target_pid, SIGTERM, "Arret");     
+                    key_name = "F6 (Arrêt)";
+                    // SIGTERM demande au processus de se terminer proprement
+                    erreur = send_process_action(target_pid, SIGTERM, "Arrêt");
+                    if (erreur == 0) {
+                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"SUCCES : Signal Terminaison envoyé au PID %d", target_pid);
+                    } else {
+                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"ERREUR : Echec signal Arrêt sur PID %d", target_pid);
+                    }
                     break;
                 case KEY_F(7):
                     key_name = "F7 (tuer/kill le processus)";
@@ -260,7 +266,7 @@ void handle_input(programme_state *state, int key, list_proc *lproc){
                     break;
                 case KEY_F(8):
                     key_name = "F8 (Reprise)";
-                    // On utilise SIGCONT pour relancer un processus stoppé (T)
+                    // utilise SIGCONT pour relancer un processus stoppé (S ou R)
                     erreur = send_process_action(target_pid, SIGCONT, "Reprise");
                     if (erreur == 0) {
                         snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"SUCCES : PID %d relance", target_pid);
