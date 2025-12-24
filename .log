@@ -2146,3 +2146,68 @@
 [INFO] ERROR : get_time for 9745
 [INFO] LP25 Fini
 
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] Error fopen for : /proc/7463/stat
+[INFO] Cannot get char for : /proc/7463/stat
+[INFO] ERROR : get_time for 7463
+[INFO] Error fopen for : /proc/6953/stat
+[INFO] Cannot get char for : /proc/6953/stat
+[INFO] ERROR : get_time for 6953
+[INFO] Error fopen for : /proc/10715/stat
+[INFO] Cannot get char for : /proc/10715/stat
+[INFO] ERROR : get_time for 10715
+[INFO] Error fopen for : /proc/10719/stat
+[INFO] Cannot get char for : /proc/10719/stat
+[INFO] ERROR : get_time for 10719
+[INFO] Error fopen for : /proc/10732/stat
+[INFO] Cannot get char for : /proc/10732/stat
+[INFO] ERROR : get_time for 10732
+[INFO] Error fopen for : /proc/10734/stat
+[INFO] Cannot get char for : /proc/10734/stat
+[INFO] ERROR : get_time for 10734
+[INFO] Error fopen for : /proc/10736/stat
+[INFO] Cannot get char for : /proc/10736/stat
+[INFO] ERROR : get_time for 10736
+[INFO] Error fopen for : /proc/10738/stat
+[INFO] Cannot get char for : /proc/10738/stat
+[INFO] ERROR : get_time for 10738
+[INFO] Error fopen for : /proc/10741/stat
+[INFO] Cannot get char for : /proc/10741/stat
+[INFO] return NULL to unformated for : 10741
+[INFO] Error fopen for : /proc/10740/stat
+[INFO] Cannot get char for : /proc/10740/stat
+[INFO] ERROR : get_time for 10740
+[INFO] Error fopen for : /proc/10746/stat
+[INFO] Cannot get char for : /proc/10746/stat
+[INFO] ERROR : get_time for 10746
+[INFO] Error fopen for : /proc/10750/stat
+[INFO] Cannot get char for : /proc/10750/stat
+[INFO] ERROR : get_time for 10750
+[INFO] Error fopen for : /proc/10752/stat
+[INFO] Cannot get char for : /proc/10752/stat
+[INFO] ERROR : get_time for 10752
+[INFO] Error fopen for : /proc/10754/stat
+[INFO] Cannot get char for : /proc/10754/stat
+[INFO] ERROR : get_time for 10754
+[INFO] Error fopen for : /proc/10756/stat
+[INFO] Cannot get char for : /proc/10756/stat
+[INFO] ERROR : get_time for 10756
+[INFO] Error fopen for : /proc/10758/stat
+[INFO] Cannot get char for : /proc/10758/stat
+[INFO] ERROR : get_time for 10758
+[INFO] Error fopen for : /proc/10794/stat
+[INFO] Cannot get char for : /proc/10794/stat
+[INFO] ERROR : get_time for 10794
+[INFO] Error fopen for : /proc/7554/stat
+[INFO] Cannot get char for : /proc/7554/stat
+[INFO] ERROR : get_time for 7554
+[INFO] Error fopen for : /proc/10796/stat
+[INFO] Cannot get char for : /proc/10796/stat
+[INFO] ERROR : get_time for 10796
+[INFO] LP25 Fini
+
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] LP25 Fini
+

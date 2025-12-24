@@ -261,8 +261,13 @@ void handle_input(programme_state *state, int key, list_proc *lproc){
                     }
                     break;
                 case KEY_F(7):
-                    key_name = "F7 (tuer/kill le processus)";
-                    send_process_action(target_pid, SIGKILL, "Kill");  
+                    key_name = "F7 (Kill)";
+                    erreur = send_process_action(target_pid, SIGKILL, "Kill");
+                    if (erreur == 0) {
+                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "SUCCES : PID %d tue par SIGKILL", target_pid);
+                    } else {
+                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "ERREUR : Impossible de tuer le PID %d", target_pid);
+                    }
                     break;
                 case KEY_F(8):
                     key_name = "F8 (Reprise)";
