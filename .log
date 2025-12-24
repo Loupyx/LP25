@@ -1900,3 +1900,118 @@
 [INFO] End loop
 [INFO] LP25 Fini
 
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] LP25 Fini
+
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] Error fopen for : /proc/8089/stat
+[INFO] Cannot get char for : /proc/8089/stat
+[INFO] ERROR : get_time for 8089
+[INFO] Error fopen for : /proc/8101/stat
+[INFO] Cannot get char for : /proc/8101/stat
+[INFO] ERROR : get_time for 8101
+[INFO] Error fopen for : /proc/8109/stat
+[INFO] Cannot get char for : /proc/8109/stat
+[INFO] ERROR : get_time for 8109
+[INFO] Error fopen for : /proc/8112/stat
+[INFO] Cannot get char for : /proc/8112/stat
+[INFO] return NULL to unformated for : 8112
+[INFO] Error fopen for : /proc/8120/stat
+[INFO] Cannot get char for : /proc/8120/stat
+[INFO] return NULL to unformated for : 8120
+[INFO] Error fopen for : /proc/8123/stat
+[INFO] Cannot get char for : /proc/8123/stat
+[INFO] ERROR : get_time for 8123
+[INFO] Error fopen for : /proc/8131/stat
+[INFO] Cannot get char for : /proc/8131/stat
+[INFO] ERROR : get_time for 8131
+[INFO] Error fopen for : /proc/8160/stat
+[INFO] Cannot get char for : /proc/8160/stat
+[INFO] ERROR : get_time for 8160
+[INFO] Error fopen for : /proc/8178/stat
+[INFO] Cannot get char for : /proc/8178/stat
+[INFO] ERROR : get_time for 8178
+[INFO] Error fopen for : /proc/8182/stat
+[INFO] Cannot get char for : /proc/8182/stat
+[INFO] return NULL to unformated for : 8182
+[INFO] Error fopen for : /proc/8183/stat
+[INFO] Cannot get char for : /proc/8183/stat
+[INFO] ERROR : get_time for 8183
+[INFO] Error fopen for : /proc/8176/stat
+[INFO] Cannot get char for : /proc/8176/stat
+[INFO] ERROR : get_time for 8176
+[INFO] Error fopen for : /proc/8186/stat
+[INFO] Cannot get char for : /proc/8186/stat
+[INFO] ERROR : get_time for 8186
+[INFO] Error fopen for : /proc/8188/stat
+[INFO] Cannot get char for : /proc/8188/stat
+[INFO] ERROR : get_time for 8188
+[INFO] Error fopen for : /proc/8191/stat
+[INFO] Cannot get char for : /proc/8191/stat
+[INFO] ERROR : get_time for 8191
+[INFO] Error fopen for : /proc/8193/stat
+[INFO] Cannot get char for : /proc/8193/stat
+[INFO] ERROR : get_time for 8193
+[INFO] Error fopen for : /proc/8195/stat
+[INFO] Cannot get char for : /proc/8195/stat
+[INFO] ERROR : get_time for 8195
+[INFO] Error fopen for : /proc/8197/stat
+[INFO] Cannot get char for : /proc/8197/stat
+[INFO] ERROR : get_time for 8197
+[INFO] Error fopen for : /proc/8199/stat
+[INFO] Cannot get char for : /proc/8199/stat
+[INFO] ERROR : get_time for 8199
+[INFO] Error fopen for : /proc/8204/stat
+[INFO] Cannot get char for : /proc/8204/stat
+[INFO] ERROR : get_time for 8204
+[INFO] Error fopen for : /proc/8212/stat
+[INFO] Cannot get char for : /proc/8212/stat
+[INFO] ERROR : get_time for 8212
+[INFO] Error fopen for : /proc/8228/stat
+[INFO] Cannot get char for : /proc/8228/stat
+[INFO] ERROR : get_time for 8228
+[INFO] LP25 Fini
+
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] Error fopen for : /proc/7228/stat
+[INFO] Cannot get char for : /proc/7228/stat
+[INFO] ERROR : get_time for 7228
+[INFO] Error fopen for : /proc/7935/stat
+[INFO] Cannot get char for : /proc/7935/stat
+[INFO] ERROR : get_time for 7935
+[INFO] Error fopen for : /proc/8322/stat
+[INFO] Cannot get char for : /proc/8322/stat
+[INFO] return NULL to unformated for : 8322
+[INFO] Error fopen for : /proc/8336/stat
+[INFO] Cannot get char for : /proc/8336/stat
+[INFO] ERROR : get_time for 8336
+[INFO] Error fopen for : /proc/8346/stat
+[INFO] Cannot get char for : /proc/8346/stat
+[INFO] ERROR : get_time for 8346
+[INFO] Error fopen for : /proc/8356/stat
+[INFO] Cannot get char for : /proc/8356/stat
+[INFO] ERROR : get_time for 8356
+[INFO] Error fopen for : /proc/8358/stat
+[INFO] Cannot get char for : /proc/8358/stat
+[INFO] ERROR : get_time for 8358
+[INFO] Error fopen for : /proc/8371/stat
+[INFO] Cannot get char for : /proc/8371/stat
+[INFO] ERROR : get_time for 8371
+[INFO] Error fopen for : /proc/8385/stat
+[INFO] Cannot get char for : /proc/8385/stat
+[INFO] ERROR : get_time for 8385
+[INFO] Error fopen for : /proc/8395/stat
+[INFO] Cannot get char for : /proc/8395/stat
+[INFO] ERROR : get_time for 8395
+[INFO] LP25 Fini
+
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] Error fopen for : /proc/8421/stat
+[INFO] Cannot get char for : /proc/8421/stat
+[INFO] ERROR : get_time for 8421
+[INFO] LP25 Fini
+
