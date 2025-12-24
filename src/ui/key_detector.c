@@ -259,8 +259,14 @@ void handle_input(programme_state *state, int key, list_proc *lproc){
                     send_process_action(target_pid, SIGKILL, "Kill");  
                     break;
                 case KEY_F(8):
-                    key_name = "F8 (redemarrer/reprendre le processus)";
-                    send_process_action(target_pid,SIGCONT, "Reprise");     
+                    key_name = "F8 (Reprise)";
+                    // On utilise SIGCONT pour relancer un processus stoppé (T)
+                    erreur = send_process_action(target_pid, SIGCONT, "Reprise");
+                    if (erreur == 0) {
+                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"SUCCES : PID %d relance", target_pid);
+                    } else {
+                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"ERREUR : Echec reprise sur PID %d", target_pid);
+                    }
                     break;
                 case KEY_RESIZE:        //permet le redimmensionnement du terminal
                     key_name = "terminal redimensionne (KEY_RESIZE)";
