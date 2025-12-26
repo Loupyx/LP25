@@ -11,6 +11,22 @@
 
 extern int max_y, max_x; 
 
+
+// fonction qui permet d'enlever les majuscules pour simplififer les recherches dans F4
+int starts_with_case(const char *str, const char *term) {
+    if (!str || !term) return 0;
+    size_t len_term = strlen(term);
+    if (len_term == 0) return 1; // une recherche vide correspond à tout
+
+    for (size_t i = 0; i < len_term; i++) {
+        // si la chaîne est plus courte que le terme ou si un caractère diffère
+        if (!str[i] || tolower((unsigned char)str[i]) != tolower((unsigned char)term[i])) {
+            return 0; 
+        }
+    }
+    return 1;
+}
+
 /*initilisation de ncurses
 WINDOW* est un pointeur vers la fenetre principale (stdscr)*/
 
@@ -50,26 +66,30 @@ void draw_help(WINDOW *work, int max_y, int max_x) {
 void draw_search_results(WINDOW *work, list_proc lproc, char *term, int max_y) {
     proc *temp = lproc;
     int lignes_affichees = 0;
-    int match_count = 0; // compteur de correspondances
+    int match_count = 0;
 
     while (temp && (lignes_affichees + 7 < max_y - 2)) {
         int match = 0;
         char pid_str[16];
         snprintf(pid_str, sizeof(pid_str), "%d", temp->PID);
-
-        if (strlen(term) == 0) {
-        match = 1;
-        } else if (strcmp(pid_str, term) == 0) {
-        match = 1;
-        } else if (temp->cmdline) {
-        // on crée un pointeur qui ignore la '(' au début du nom si elle existe
-        char *nom_nettoye = (temp->cmdline[0] == '(') ? &temp->cmdline[1] : temp->cmdline;
         
-        // on compare le terme recherché avec ce nom "nettoyé"
-        if (strncmp(nom_nettoye, term, strlen(term)) == 0) {
+        // comparaison avec un numero de PID qui commence par ...
+        if (strlen(term) == 0) {
             match = 1;
+        } else if (starts_with_case(pid_str, term)) { 
+            match = 1;
+        }
+        // comparaison avec une chaine de caracteres qui commence par ... (en enlevant les '(' et les majuscules)
+        else if (temp->cmdline) {
+            // verification parenthese 
+            char *nom_nettoye = (temp->cmdline[0] == '(') ? &temp->cmdline[1] : temp->cmdline;
+            
+            // comparaison avec le debut 
+            if (starts_with_case(nom_nettoye, term)) {
+                match = 1;
             }
         }
+
         if (match) {
             mvwprintw(work, lignes_affichees + 7, 0, "%-6d\t%-6d\t%-25s\t%-5.1f\t%c\t%.40s",
                       temp->PID, temp->PPID, temp->user ? temp->user : "?",
@@ -80,7 +100,6 @@ void draw_search_results(WINDOW *work, list_proc lproc, char *term, int max_y) {
         temp = temp->next;
     }
 
-    // si on trouve rien qui correspond : on affiche un message d'alerte
     if (match_count == 0 && strlen(term) > 0) {
         mvwprintw(work, 8, 0, " [!] Aucun processus ne correspond a : '%s'", term);
     }

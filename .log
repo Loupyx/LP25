@@ -2211,3 +2211,140 @@
 [INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
 [INFO] LP25 Fini
 
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] Error fopen for : /proc/11699/stat
+[INFO] Cannot get char for : /proc/11699/stat
+[INFO] return NULL to unformated for : 11699
+[INFO] Error fopen for : /proc/11743/stat
+[INFO] Cannot get char for : /proc/11743/stat
+[INFO] ERROR : get_time for 11743
+[INFO] Error fopen for : /proc/11755/stat
+[INFO] Cannot get char for : /proc/11755/stat
+[INFO] ERROR : get_time for 11755
+[INFO] Error fopen for : /proc/11757/stat
+[INFO] Cannot get char for : /proc/11757/stat
+[INFO] ERROR : get_time for 11757
+[INFO] Error fopen for : /proc/11786/stat
+[INFO] Cannot get char for : /proc/11786/stat
+[INFO] ERROR : get_time for 11786
+[INFO] Error fopen for : /proc/11779/stat
+[INFO] Cannot get char for : /proc/11779/stat
+[INFO] ERROR : get_time for 11779
+[INFO] Error fopen for : /proc/11788/stat
+[INFO] Cannot get char for : /proc/11788/stat
+[INFO] ERROR : get_time for 11788
+[INFO] Error fopen for : /proc/11790/stat
+[INFO] Cannot get char for : /proc/11790/stat
+[INFO] ERROR : get_time for 11790
+[INFO] Error fopen for : /proc/11792/stat
+[INFO] Cannot get char for : /proc/11792/stat
+[INFO] ERROR : get_time for 11792
+[INFO] Error fopen for : /proc/11796/stat
+[INFO] Cannot get char for : /proc/11796/stat
+[INFO] ERROR : get_time for 11796
+[INFO] Error fopen for : /proc/11802/stat
+[INFO] Cannot get char for : /proc/11802/stat
+[INFO] ERROR : get_time for 11802
+[INFO] Error fopen for : /proc/11806/stat
+[INFO] Cannot get char for : /proc/11806/stat
+[INFO] ERROR : get_time for 11806
+[INFO] Error fopen for : /proc/11808/stat
+[INFO] Cannot get char for : /proc/11808/stat
+[INFO] ERROR : get_time for 11808
+[INFO] Error fopen for : /proc/11816/stat
+[INFO] Cannot get char for : /proc/11816/stat
+[INFO] ERROR : get_time for 11816
+[INFO] Error fopen for : /proc/11822/stat
+[INFO] Cannot get char for : /proc/11822/stat
+[INFO] ERROR : get_time for 11822
+[INFO] Error fopen for : /proc/11830/stat
+[INFO] Cannot get char for : /proc/11830/stat
+[INFO] ERROR : get_time for 11830
+[INFO] Error fopen for : /proc/11840/stat
+[INFO] Cannot get char for : /proc/11840/stat
+[INFO] ERROR : get_time for 11840
+[INFO] Error fopen for : /proc/11854/stat
+[INFO] Cannot get char for : /proc/11854/stat
+[INFO] ERROR : get_time for 11854
+[INFO] Error fopen for : /proc/11842/stat
+[INFO] Cannot get char for : /proc/11842/stat
+[INFO] ERROR : get_time for 11842
+[INFO] Error fopen for : /proc/11886/stat
+[INFO] Cannot get char for : /proc/11886/stat
+[INFO] return NULL to unformated for : 11886
+[INFO] Error fopen for : /proc/11887/stat
+[INFO] Cannot get char for : /proc/11887/stat
+[INFO] ERROR : get_time for 11887
+[INFO] Error fopen for : /proc/11894/stat
+[INFO] Cannot get char for : /proc/11894/stat
+[INFO] return NULL to unformated for : 11894
+[INFO] Error fopen for : /proc/11895/stat
+[INFO] Cannot get char for : /proc/11895/stat
+[INFO] ERROR : get_time for 11895
+[INFO] Error fopen for : /proc/11903/stat
+[INFO] Cannot get char for : /proc/11903/stat
+[INFO] ERROR : get_time for 11903
+[INFO] Error fopen for : /proc/10912/stat
+[INFO] Cannot get char for : /proc/10912/stat
+[INFO] ERROR : get_time for 10912
+[INFO] Error fopen for : /proc/11917/stat
+[INFO] Cannot get char for : /proc/11917/stat
+[INFO] ERROR : get_time for 11917
+[INFO] Error fopen for : /proc/11922/stat
+[INFO] Cannot get char for : /proc/11922/stat
+[INFO] ERROR : get_time for 11922
+[INFO] Error fopen for : /proc/11942/stat
+[INFO] Cannot get char for : /proc/11942/stat
+[INFO] ERROR : get_time for 11942
+[INFO] LP25 Fini
+
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] Error fopen for : /proc/4967/stat
+[INFO] Cannot get char for : /proc/4967/stat
+[INFO] return NULL to unformated for : 4967
+[INFO] LP25 Fini
+
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] Error fopen for : /proc/5350/stat
+[INFO] Cannot get char for : /proc/5350/stat
+[INFO] ERROR : get_time for 5350
+[INFO] Error fopen for : /proc/5368/stat
+[INFO] Cannot get char for : /proc/5368/stat
+[INFO] return NULL to unformated for : 5368
+[INFO] Error fopen for : /proc/5370/stat
+[INFO] Cannot get char for : /proc/5370/stat
+[INFO] return NULL to unformated for : 5370
+[INFO] Error fopen for : /proc/5371/stat
+[INFO] Cannot get char for : /proc/5371/stat
+[INFO] return NULL to unformated for : 5371
+[INFO] Error fopen for : /proc/5389/stat
+[INFO] Cannot get char for : /proc/5389/stat
+[INFO] return NULL to unformated for : 5389
+[INFO] Error fopen for : /proc/5390/stat
+[INFO] Cannot get char for : /proc/5390/stat
+[INFO] return NULL to unformated for : 5390
+[INFO] Error fopen for : /proc/5409/stat
+[INFO] Cannot get char for : /proc/5409/stat
+[INFO] return NULL to unformated for : 5409
+[INFO] Error fopen for : /proc/5411/stat
+[INFO] Cannot get char for : /proc/5411/stat
+[INFO] return NULL to unformated for : 5411
+[INFO] Error fopen for : /proc/5412/stat
+[INFO] Cannot get char for : /proc/5412/stat
+[INFO] return NULL to unformated for : 5412
+[INFO] Error fopen for : /proc/5414/stat
+[INFO] Cannot get char for : /proc/5414/stat
+[INFO] return NULL to unformated for : 5414
+[INFO] LP25 Fini
+
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] LP25 Fini
+
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] LP25 Fini
+
