@@ -206,33 +206,54 @@ void handle_input(programme_state *state, int key, list_proc *lproc){
             if (state->is_help_displayed) {
                 state->is_help_displayed = 0;
             } else if (state->is_search_active) {
-                state->is_search_active = 0; // On ferme juste la recherche
-                state->search_term[0] = '\0'; // On réinitialise la recherche
+                state->is_search_active = 0; //  ferme juste la recherche
+                state->search_term[0] = '\0'; // réinitialise la recherche
             } else {
-                state->is_running = 0; // On quitte le programme seulement si ni aide ni recherche ne sont actives
+                state->is_running = 0; // quitte le programme seulement si ni aide ni recherche ne sont actives
             }
             key_name = "'q'";
             break;
 
         default: 
-            // Si l'aide est affichée, ignorer toutes les autres touches (F2-F8, etc.)
+            // si l'aide est affichée, ignorer toutes les autres touches (F2-F8, etc.)
             if (state->is_help_displayed) {
                  return;
             }
+
             if (state->is_search_active) {
                 int len = strlen(state->search_term);
                 
                 if (key == '\n' || key == KEY_ENTER) {
-                    key_name = "Recherche validée";
-                    // On ne fait rien d'autre : l'affichage se mettra à jour tout seul
+                    proc *temp = *lproc;
+                    int found_pid = -1;
+
+                    while (temp) {
+                        char pid_str[16];
+                        snprintf(pid_str, sizeof(pid_str), "%d", temp->PID);
+                        char *nom_nettoye = (temp->cmdline && temp->cmdline[0] == '(') ? &temp->cmdline[1] : temp->cmdline;
+
+                        if (starts_with_case(pid_str, state->search_term) || 
+                           (nom_nettoye && starts_with_case(nom_nettoye, state->search_term))) {
+                            found_pid = temp->PID;
+                            break; 
+                        }
+                        temp = temp->next;
+                    }
+
+                    if (found_pid != -1) {
+                        state->selected_pid = found_pid; 
+                        state->is_search_active = 0;     
+                        key_name = "Recherche validée";
+                    } else {
+                        key_name = "ERREUR : Aucun match";
+                    }
                 } 
                 else if (key == KEY_F(4)) {
-                    state->is_search_active = 0; // Seul F4 ferme maintenant le mode
+                    state->is_search_active = 0;
                     key_name = "Fin de recherche (F4)";
                 } 
                 else if (key == KEY_BACKSPACE || key == 127 || key == 8) {
                     if (len > 0) state->search_term[len - 1] = '\0';
-                    key_name = "Saisie : BACKSPACE";
                 } 
                 else if (isprint(key) && (len < (int)sizeof(state->search_term) - 1)) {
                     state->search_term[len] = (char)key;
@@ -242,7 +263,7 @@ void handle_input(programme_state *state, int key, list_proc *lproc){
                 if (key_name) {
                     strncpy(state->last_key_pressed, key_name, sizeof(state->last_key_pressed) - 1);
                 }
-                return; 
+                return;
             }
             
             // Traitement des autres touches si l'aide n'est PAS affichée
