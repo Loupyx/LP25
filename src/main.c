@@ -213,25 +213,29 @@ int main(int argc, char *argv[]){
 
         getmaxyx(main_work, max_y, max_x);
 
-        // --- Gestion des touches  ---
+        // --- Gestion des touches dans le main.c ---
         if (ch != ERR) {
             handle_input(&state, ch, &lproc);
-            char *lkp = state.last_key_pressed;
 
-            if (ch == KEY_UP || strstr(lkp, "Flèche/pavier haut") != NULL) {
-                if (selected_proc && selected_proc->prev != NULL) {
-                    selected_proc = selected_proc->prev;
+            // quand on valide avec la touche 'entrée' 
+            if (ch == '\n' || ch == KEY_ENTER) {
+                proc *scan = lproc;
+                while (scan) {
+                    if (scan->PID == state.selected_pid) {
+                        selected_proc = scan; // on place le curseur sur le résultat
+                        break;
+                    }
+                    scan = scan->next;
                 }
-                strncpy(state.last_key_pressed, "Navigation : HAUT", sizeof(state.last_key_pressed));
             }
-            else if (ch == KEY_DOWN || strstr(lkp, "Flèche/pavier bas") != NULL) {
-                if (selected_proc && selected_proc->next != NULL) {
-                    selected_proc = selected_proc->next;
-                }
-                strncpy(state.last_key_pressed, "Navigation : BAS", sizeof(state.last_key_pressed));
+            // navigation classique avec les fleches 
+            else if (ch == KEY_UP && selected_proc && selected_proc->prev) {
+                selected_proc = selected_proc->prev;
+            }
+            else if (ch == KEY_DOWN && selected_proc && selected_proc->next) {
+                selected_proc = selected_proc->next;
             }
         }
-
 
         char *lkp = state.last_key_pressed;
         // flèche haut
