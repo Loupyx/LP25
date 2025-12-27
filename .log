@@ -2361,3 +2361,22 @@
 [INFO] ERROR : get_time for 6493
 [INFO] LP25 Fini
 
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] LP25 Fini
+
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] Error fopen for : /proc/5266/stat
+[INFO] Cannot get char for : /proc/5266/stat
+[INFO] ERROR : get_time for 5266
+[INFO] LP25 Fini
+
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] LP25 Fini
+
+[INFO] --------------------Init new session----------------------
+[INFO] Pas d'option précisée, on se contente d'afficher les processus locaux.
+[INFO] LP25 Fini
+

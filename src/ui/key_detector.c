@@ -109,7 +109,17 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
     int max_y, max_x;
     getmaxyx(work, max_y, max_x);
     werase(work);   //permet d'effacer la fenetre d'avant 
-    mvprintw(0, 0, "--- interface HTOP projet LP25 ---");
+    mvprintw(0, 0, "--- Interface HTOP projet LP25 ---");
+    
+    if (state->current_server == NULL) {
+        attron(A_BOLD); 
+        mvprintw(1, 0, "MACHINE : [ LOCAL ]");
+        attroff(A_BOLD); // On arrête le gras ici
+    } else {
+        attron(A_BOLD);
+        mvprintw(1, 0, "MACHINE : [ %s (%s) ]", state->current_server->serv->name, state->current_server->serv->adresse);
+        attroff(A_BOLD); // On arrête le gras ici aussi
+    }
     if (state->is_help_displayed) {
         //affiche le panneau d'aide 
         draw_help(work, max_y, max_x);
@@ -176,7 +186,7 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
         // c'est ici qu'on va afficher la liste des processus (SIMONNN)
     }
     // affichage commun des raccourcis
-    mvprintw(max_y - 1, 0, "[F1] aide | [F2/F3] onglets | [F4] recherche | [F5-F8] actions processus | q quitter ");
+    mvprintw(max_y - 1, 0, "[F1] Aide | [F2] Onglet suivant | [F3] Onglet précédant | [F4] Recherche | [F5-F8] Actions processus (voir types d'action dans l'aide [F1]) | [q] Quitter ");
 
     if (state->is_search_active && !state->is_help_displayed) {
         curs_set(1); // curseur visible
@@ -267,19 +277,39 @@ void handle_input(programme_state *state, int key, list_proc *lproc){
             }
             
             // Traitement des autres touches si l'aide n'est PAS affichée
-            switch (key) {
+            switch (key) { 
+                case KEY_F(2): // Onglet Suivant
+                    if (state->server_list != NULL) {
+                    // Si on est en local (NULL), on va au premier serveur
+                        if (state->current_server == NULL) {
+                            state->current_server = state->server_list;
+                        } 
+                        // Sinon on avance si possible
+                        else if (state->current_server->next != NULL) {
+                            state->current_server = state->current_server->next;
+                        }
+                        if (state->current_server) {
+                            snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "Onglet : %s", state->current_server->serv->name);
+                        }
+                    }
+                    break;
+                case KEY_F(3): // Onglet Précédent
+                    if (state->current_server != NULL) {
+                        // Si on est sur le premier maillon, on revient en local
+                        if (state->current_server->prev == NULL) {
+                            state->current_server = NULL;
+                            strcpy(state->last_key_pressed, "Onglet : LOCAL");
+                        } else {
+                            state->current_server = state->current_server->prev;
+                            snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "Onglet : %s", state->current_server->serv->name);
+                        }   
+                    }
+                    break;
                 case KEY_F(4):
                     state->is_search_active =1;
                     key_name = "F4 (Recherche)";
                     state->search_term[0] = '\0';
                     break;
-                case KEY_F(2):
-                    key_name = "F2 (onglet suivant)";
-                    break;
-                case KEY_F(3):
-                    key_name = "F3 (onglet precedent)";
-                    break;
-                
                 case KEY_F(5):
                     key_name = "F5 (Pause)";
                     erreur = send_process_action(target_pid, SIGSTOP, "Pause");
