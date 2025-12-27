@@ -171,7 +171,7 @@ int get_arg(int argc, char *argv[]){
 int main(int argc, char *argv[]){
     write_log("--------------------Init new session----------------------");
     int argument = get_arg(argc, argv);
-    int err;
+    int err = 0;
 
     if (argument == 1) { //erreur dans les arguments
         return 1;
@@ -208,68 +208,69 @@ int main(int argc, char *argv[]){
     proc *selected_proc = lproc;
     proc *temp = NULL;
 
+    //partie pour la liste des serveurs 
+    int error_serv = 0;
+    state.server_list = get_serveur_config(".config", &error_serv);
+    state.current_server = NULL; // on commence toujours en local
+
     while (state.is_running) {
-        err = 0;
-        int ch = wgetch(main_work);
-        
-        // on compte le nb total de processus
+        int ch = wgetch(main_work); 
         getmaxyx(main_work, max_y, max_x);
 
+        // GESTION DES TOUCHES
         if (ch != ERR) {
-            // on lit les touches
-            char old_key[64];
-            strcpy(old_key, state.last_key_pressed);
-            handle_input(&state, ch);
-        }
-        char *lkp = state.last_key_pressed;
-        // flèche haut
-        if (strstr(lkp, "Flèche/pavier haut") != NULL){ //fleche haut
-            if (selected_proc->prev != NULL) {
+            handle_input(&state, ch, &lproc);
+
+            if (ch == '\n' || ch == KEY_ENTER) {
+                proc *scan = lproc;
+                while (scan) {
+                    if (scan->PID == state.selected_pid) {
+                        selected_proc = scan; 
+                        break;
+                    }
+                    scan = scan->next;
+                }
+            }
+            else if (ch == KEY_UP && selected_proc && selected_proc->prev) {
                 selected_proc = selected_proc->prev;
             }
-            strcpy(state.last_key_pressed, ""); 
-        }
-
-        // flèche bas
-        else if (strstr(lkp, "Flèche/pavier bas") != NULL) { //fleche bas
-            if (selected_proc->next != NULL) {
+            else if (ch == KEY_DOWN && selected_proc && selected_proc->next) {
                 selected_proc = selected_proc->next;
             }
-            strcpy(state.last_key_pressed, "");
+        }
+
+        // MISE À JOUR DES DONNEES (L'ONGLET)
+        char **dirs = NULL;
+        if (state.current_server == NULL) {
+            // MODE LOCAL
+            dirs = get_list_dirs("/proc");
+            if (dirs) {
+                err = update_l_proc(&lproc, NULL, dirs, LOCAL);
+                destoy_char(dirs);
+            }
+        } else {
+            // MODE DISTANT (SSH)
+            // On ne fait rien pour l'instant car lproc contient encore les infos locales (LOUISE OU SIMON C'EST ICI)
+            // Mais l'interface affichera le nom du serveur grâce à handle_input
+            snprintf(state.last_key_pressed, sizeof(state.last_key_pressed), 
+                     "Visualisation de : %s", state.current_server->serv->name);
+        }
+
+        // SECURITE DU CURSEUR (Empeche le crash si un processus disparait)
+        int found = 0;
+        proc *check = lproc;
+        while (check) {
+            if (check == selected_proc) {
+                found = 1;
+                break;
+            }
+            check = check->next;
+        }
+        if (!found) {
+            selected_proc = lproc; 
         }
 
         draw_ui(main_work, &state, lproc, selected_proc);
-        dirs = get_list_dirs("/proc");
-        if (!dirs) {
-            write_log("Dir : NO");
-            return 3;
-        }
-        err = update_l_proc(&lproc, NULL, dirs, LOCAL);
-        if (err != 0) {
-            state.is_running = 4;
-            write_log("ERROR : update");
-        }
-        if (!lproc) {
-            state.is_running = 5;
-            break;
-        }
-
-        temp = lproc;
-
-        if (!temp) {
-            write_log("ERROR : update return a empty list");
-            state.is_running = 6;
-        } else {
-            while (temp->next && (temp->PID < selected_proc->PID)){
-                temp = temp->next;
-            }
-            if (!temp) {
-                selected_proc = lproc;
-            } else {
-                selected_proc = temp;
-            }
-        }
-        wrefresh(main_work);
     }
 
     // on nettoie !

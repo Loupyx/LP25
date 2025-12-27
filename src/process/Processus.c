@@ -103,6 +103,7 @@ char *get_char(char *pid, char *file, enum acces_type connexion, ssh_state *stat
     }
     if (!text) {
         write_log("Cannot get char for : %s", path);
+
     }
     return text;
 }
@@ -159,7 +160,7 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
         return NULL;
     }
 
-    unformated = get_char(pid, "stat", connexion, state);
+    unformated = get_char(pid, "stat", connexion, state);       //j'ai modif ici pour masquer les erreurs et donc pas tout casser l'affichage 
     if (!unformated) {
         write_log("return NULL to unformated for : %s", pid);
         return NULL;
@@ -184,8 +185,8 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
         write_log("erreur get_time for %d", new->PID);
         return NULL;
     }
-
-    unformated = get_char(pid, "status", connexion, state);
+    
+    unformated = get_char(pid, "status", connexion, state);     //j'ai modif ici pour masquer les erreurs et donc pas tout casser l'affichage 
     if (!unformated) {
         write_log("return NULL to unformated for : %s", pid);
         free(new);
@@ -236,8 +237,10 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
 
     while (list_dir[i]) {
         proc *new = get_info(list_dir[i], state, connexion);
-        new->CPU = 0;
-        list = add_queue_proc(list, new);
+        if (new != NULL) {
+            new->CPU = 0;
+            list = add_queue_proc(list, new);
+        }
         ++i;
     }
     *lproc = list;
@@ -298,7 +301,7 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
         if (find == 0) {
             char *pid =  list_dir[i];
             proc *new = get_info(pid, state, connexion);
-            if (new != NULL) {
+            if ( new != NULL) {
                 *lproc = add_queue_proc(*lproc, new);
             }
         }
