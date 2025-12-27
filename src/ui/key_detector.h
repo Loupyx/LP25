@@ -15,7 +15,9 @@ typedef struct {
     pid_t selected_pid;           /**doonne le PID selectionné */
     int is_help_displayed;      /**Indicateur pour afficher le panneau d'aide (1=Oui, 0=Non)*/
     int is_search_active;       /**indique si le mode recherche est actif (1=oui et 0=non) */
-    char search_term[128];      /** terme de recherche saisie par l'utilisateur*/ 
+    char search_term[128];      /** terme de recherche saisie par l'utilisateur*/
+    list_serv server_list;    // La liste chargée depuis le .config
+    maillon *current_server;  // Le serveur actuellement affiché (NULL = Local) 
 } programme_state;
 
 /**
