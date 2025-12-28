@@ -236,6 +236,9 @@ int main(int argc, char *argv[]) {
         write_log("Démarrage sur machine distante : %s", state.current_server->serv->name);
     }
 
+    int window_size = 35; // nombre de processus affichés à l'écran
+
+
     proc *selected_proc = lproc;
     proc *temp = NULL;
 
@@ -410,4 +413,5 @@ int main(int argc, char *argv[]) {
 
     write_log("LP25 Fini\n");
     return err;
+}
 }
