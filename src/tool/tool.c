@@ -28,7 +28,7 @@ int write_log(const char *text, ...) {
     vfprintf(f, text, args);   // applique fmt + variables
     va_end(args);
     fputc('\n', f); 
-    if (log){
+    if (log) {
         fclose(log);
         return 0;
     }
@@ -264,7 +264,7 @@ void free_ssh_dir(char **list) {
     free(list);
 }
 //TELNET
-char *get_char_telnet(){
+char *get_char_telnet() {
     return "à faire";
 }
 
@@ -314,7 +314,7 @@ char **split(char *line, char delim) {
     return res;
 }
 
-void destoy_char(char *line[]){
+void destoy_char(char *line[]) {
     if (!line) {
         return;
     }
@@ -334,7 +334,7 @@ int is_number(const char *s) {
 }
 
 void print_str_array(char **tab) {
-    if (!tab){
+    if (!tab) {
         return;
     }
     for (int i=0; tab[i]; i++) {
