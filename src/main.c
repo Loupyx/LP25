@@ -38,7 +38,7 @@ struct option long_options[] = {
     {0, 0, 0, 0} // stop
 };
 
-int get_arg(int argc, char *argv[]){
+int get_arg(int argc, char *argv[]) {
 
     while ((opt = getopt_long(argc, argv, "hc:t:P:l:s:u:p:a", long_options, NULL)) != -1) {
         switch (opt) {
@@ -168,7 +168,7 @@ int get_arg(int argc, char *argv[]){
     return 0;
 }
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
     write_log("--------------------Init new session----------------------");
     int argument = get_arg(argc, argv);
     int err = 0;
@@ -189,7 +189,7 @@ int main(int argc, char *argv[]){
     strcpy(state.last_key_pressed, "aucune");
     state.selected_pid = 0;
     main_work = initialize_ncurses();
-    if (main_work == NULL){
+    if (main_work == NULL) {
         return 1;
     }
     wtimeout(main_work, tout); //definition du refresh 
@@ -206,7 +206,6 @@ int main(int argc, char *argv[]){
         }
     }
     proc *selected_proc = lproc;
-    proc *temp = NULL;
 
     //partie pour la liste des serveurs 
     int error_serv = 0;

@@ -30,9 +30,9 @@ int starts_with_case(const char *str, const char *term) {
 /*initilisation de ncurses
 WINDOW* est un pointeur vers la fenetre principale (stdscr)*/
 
-WINDOW *initialize_ncurses(){
+WINDOW *initialize_ncurses() {
     WINDOW *work = initscr();
-    if (work == NULL){
+    if (work == NULL) {
         write_log("erreur lors de l'initialisation de ncurses");
         return NULL;
     }
@@ -46,7 +46,7 @@ WINDOW *initialize_ncurses(){
 
 
 /*dessine le contenu du panneau d'aide*/
-void draw_help(WINDOW *work, int max_y, int max_x) {
+void draw_help(int max_y, int max_x) {
     mvprintw(2, 5, "--- Aide : Raccourcis Clavier ---");
     //contenu de l'aide
     mvprintw(4, 5, "[F1] : Afficher de l'aide / cacher l'aide");
@@ -122,7 +122,7 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
     }
     if (state->is_help_displayed) {
         //affiche le panneau d'aide 
-        draw_help(work, max_y, max_x);
+        draw_help(max_y, max_x);
     } else if (state->is_search_active) {
         mvprintw(2, 0, "Mode recherche activé (ENTREE pour filtrer | F4 ou 'q' pour quitter)");
         mvprintw(4, 0, "Recherche : %s", state->search_term); // Texte simplifié
@@ -201,12 +201,12 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
 
 
 /*gere les entrees du clavier et met a jour l'etat avec le parametre state (etat actuel du prog a modif)*/
-void handle_input(programme_state *state, int key, list_proc *lproc){
+void handle_input(programme_state *state, int key, list_proc *lproc) {
     const char *key_name = NULL;
     pid_t target_pid = state->selected_pid;
     int erreur;
 
-    switch (key){
+    switch (key) {
         case KEY_F(1):
             state->is_help_displayed =! state->is_help_displayed;
             key_name = "F1 (aide)";
