@@ -234,10 +234,9 @@ int main(int argc, char *argv[]) {
         // si on commence en distant, lproc restera vide jusqu'à l'implémentation SSH
         write_log("Démarrage sur machine distante : %s", state.current_server->serv->name);
     }
-    
+
     proc *selected_proc = lproc;
     
-
     while (state.is_running) {
         int ch = wgetch(main_work); 
 
