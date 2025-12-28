@@ -12,16 +12,16 @@
 #include "tool/tool.h"
 
 int opt; // c'est tout ce qu'on met après ./projet, ce qu'on va analyser
-int dry_run = 0;      // va servir à tester l'accès à la liste des process sans les afficher (si c'est 1, on teste sans afficher, si non on affichera )
-int all = 0;          // va servir à récup en distance et en local si c'est 1, qu'en local sinon
-char *remote_config = NULL;   // c'est le chemin vers le fichier de config pour les trucs à distance
-char *connexion_type = NULL;  // on choisit ssh ou telnet
-int port = -1;                // port de connexion (-1 par défaut si on le donne pas)
-char *login = NULL;            // login, genre win
-char *remote_server = NULL;    // nom DNS ou IP de la machine distante
-char *username = NULL;          // nom d'utilisateur pour la connexion à distance
-char *password = NULL;          // mot de passe pour la connexion à distance
-int max_y, max_x;   //taille fenetre 
+int dry_run = 0; // va servir à tester l'accès à la liste des process sans les afficher (si c'est 1, on teste sans afficher, si non on affichera )
+int all = 0; // va servir à récup en distance et en local si c'est 1, qu'en local sinon
+char *remote_config = NULL; // c'est le chemin vers le fichier de config pour les trucs à distance
+char *connexion_type = NULL; // on choisit ssh ou telnet
+int port = -1; // port de connexion (-1 par défaut si on le donne pas)
+char *login = NULL; // login, genre win
+char *remote_server = NULL; // nom DNS ou IP de la machine distante
+char *username = NULL; // nom d'utilisateur pour la connexion à distance
+char *password = NULL; // mot de passe pour la connexion à distance
+int max_y, max_x; //taille fenetre 
 
 // On définit les options longues, que -h = --help
 struct option long_options[] = {
@@ -126,7 +126,11 @@ int get_arg(int argc, char *argv[]){
         return 0;
     }
 
-    
+    if (all == 1 && remote_server == NULL) {
+    fprintf(stderr, "On a besoin que -s soit rempli pour utiliser correctement -a\n");
+    return 1;
+}
+
 
     // Si l'utilisateur a donné un remote_server, on vérifie s'il a fourni username/password
 
@@ -193,17 +197,40 @@ int main(int argc, char *argv[]){
     draw_ui(main_work, &state);
 
     // on récupère les processus
-    list_proc lproc = NULL;
-    char **dirs = get_list_dirs("/proc");
-    if (dirs != NULL) {
-        int err = get_all_proc(&lproc, NULL, dirs, LOCAL);
+list_proc lproc = NULL;
+char **dirs = get_list_dirs("/proc");
+int err;
+
+if (dirs != NULL) {
+
+    // on commence par les proc locaux
+    err = get_all_proc(&lproc, NULL, dirs, LOCAL);
+    if (err != 0) {
+        endwin();
+        printf("ERREUR: get_all_proc LOCAL = %d\n", err);
         destoy_char(dirs);
+        return 1;
+    }
+
+    if (all == 1) { // si all = 1, on affiche aussi les proc sur un serveur distant
+        if (login == "SSH"){
+            err = get_all_proc(&lproc, remote_server, dirs, SSH);
+        }
+        if (login == "TELNET"){
+            err = get_all_proc(&lproc, remote_server, dirs, TELNET);
+        }
+        
         if (err != 0) {
             endwin();
-            printf("ERREUR: get_all_proc = %d\n", err);
+            printf("ERREUR: get_all_proc REMOTE = %d\n", err);
+            destoy_char(dirs);
             return 1;
         }
     }
+
+    destoy_char(dirs);
+}
+
     
     int window_size = 35; // nombre de processus affichés à l'écran
     proc *selected_proc = lproc;
