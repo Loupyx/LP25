@@ -173,7 +173,6 @@ int get_arg(int argc, char *argv[]){
 }
 
 int main(int argc, char *argv[]){
-    write_log("--------------------Init new session----------------------");
     int argument = get_arg(argc, argv);
     int err;
 
@@ -231,8 +230,8 @@ int main(int argc, char *argv[]){
 
     destoy_char(dirs);
 }
-
     int window_size = 35; // nombre de processus affichés à l'écran
+
 
     proc *selected_proc = lproc;
     proc *temp = NULL;
