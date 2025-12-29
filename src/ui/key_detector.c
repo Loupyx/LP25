@@ -30,9 +30,9 @@ int starts_with_case(const char *str, const char *term) {
 /*initilisation de ncurses
 WINDOW* est un pointeur vers la fenetre principale (stdscr)*/
 
-WINDOW *initialize_ncurses(){
+WINDOW *initialize_ncurses() {
     WINDOW *work = initscr();
-    if (work == NULL){
+    if (work == NULL) {
         write_log("erreur lors de l'initialisation de ncurses");
         return NULL;
     }
@@ -46,7 +46,7 @@ WINDOW *initialize_ncurses(){
 
 
 /*dessine le contenu du panneau d'aide*/
-void draw_help(WINDOW *work, int max_y, int max_x) {
+void draw_help(int max_y, int max_x) {
     mvprintw(2, 5, "--- Aide : Raccourcis Clavier ---");
     //contenu de l'aide
     mvprintw(4, 5, "[F1] : Afficher de l'aide / cacher l'aide");
@@ -122,7 +122,7 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
     }
     if (state->is_help_displayed) {
         //affiche le panneau d'aide 
-        draw_help(work, max_y, max_x);
+        draw_help(max_y, max_x);
     } else if (state->is_search_active) {
         mvprintw(2, 0, "Mode recherche activé (ENTREE pour filtrer | F4 ou 'q' pour quitter)");
         mvprintw(4, 0, "Recherche : %s", state->search_term); // Texte simplifié
@@ -183,7 +183,6 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
                 break;
             }  
         }
-        // c'est ici qu'on va afficher la liste des processus (SIMONNN)
     }
     // affichage commun des raccourcis
     mvprintw(max_y - 1, 0, "[F1] Aide | [F2] Onglet suivant | [F3] Onglet précédant | [F4] Recherche | [F5-F8] Actions processus (voir types d'action dans l'aide [F1]) | [q] Quitter ");
