@@ -304,5 +304,5 @@ int main(int argc, char *argv[]) {
     }
 
     write_log("LP25 Fini\n");
-    return 0;
+    return err;
 }
