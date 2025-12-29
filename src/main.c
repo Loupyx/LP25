@@ -193,24 +193,41 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     wtimeout(main_work, tout); //definition du refresh 
-    // on récupère les processus
-    list_proc lproc = NULL;
-    char **dirs = get_list_dirs("/proc");
-    if (dirs != NULL) {
-        err = get_all_proc(&lproc, NULL, dirs, LOCAL);
-        destoy_char(dirs);
-        if (err != 0) {
-            endwin();
-            printf("ERREUR: get_all_proc = %d\n", err);
-            return 2;
-        }
-    }
-    proc *selected_proc = lproc;
-
+    
     //partie pour la liste des serveurs 
     int error_serv = 0;
     state.server_list = get_serveur_config(".config", &error_serv);
-    state.current_server = NULL; // on commence toujours en local
+
+    // regarde les permissions de navigation
+    // autorise le local si pas d'arguments OU option -a
+    state.allow_local = (argc == 1 || all == 1);
+    // autorise le distant si option -a OU option -c OU serveur distant precise
+    state.allow_remote = (all == 1 || remote_server != NULL || state.server_list != NULL);
+
+    //on ne commence pas toujours en local
+    if (state.allow_local) {
+        state.current_server = NULL; 
+    } else if (state.allow_remote && state.server_list != NULL) {
+        state.current_server = state.server_list; 
+    } else {
+        state.current_server = NULL; // securite fallback
+    }
+
+    // pre-charge la liste initiale selon la machine choisie
+    list_proc lproc = NULL;
+    if (state.current_server == NULL) {
+        char **dirs = get_list_dirs("/proc");
+        if (dirs != NULL) {
+            err = get_all_proc(&lproc, NULL, dirs, LOCAL);
+            destoy_char(dirs);
+        }
+    } else {
+        // si on commence en distant, lproc restera vide jusqu'à l'implémentation SSH
+        write_log("Démarrage sur machine distante : %s", state.current_server->serv->name);
+    }
+    
+    proc *selected_proc = lproc;
+    
 
     while (state.is_running) {
         int ch = wgetch(main_work); 

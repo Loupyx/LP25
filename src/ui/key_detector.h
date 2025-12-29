@@ -18,6 +18,8 @@ typedef struct {
     char search_term[128];      /** terme de recherche saisie par l'utilisateur*/
     list_serv server_list;    // La liste chargée depuis le .config
     maillon *current_server;  // Le serveur actuellement affiché (NULL = Local) 
+    int allow_local;   /** 1 si l'onglet local est autorisé */
+    int allow_remote;  /** 1 si les onglets distants sont autorisés */
 } programme_state;
 
 /**
@@ -63,7 +65,7 @@ void handle_input(programme_state *state, int key, list_proc *lproc);
  * \param str  chaine de caracteres a analyser afin de verifier si il y a des majuscules
  * \param term   retourne 1 si terme est contenue dans str sans majuscule
  */
-int strcasestr_custom(const char *str, const char *term);
+int starts_with_case(const char *str, const char *term);
 
 
 #endif
