@@ -30,9 +30,9 @@ int starts_with_case(const char *str, const char *term) {
 /*initilisation de ncurses
 WINDOW* est un pointeur vers la fenetre principale (stdscr)*/
 
-WINDOW *initialize_ncurses() {
+WINDOW *initialize_ncurses(){
     WINDOW *work = initscr();
-    if (work == NULL) {
+    if (work == NULL){
         write_log("erreur lors de l'initialisation de ncurses");
         return NULL;
     }
@@ -46,7 +46,7 @@ WINDOW *initialize_ncurses() {
 
 
 /*dessine le contenu du panneau d'aide*/
-void draw_help(int max_y, int max_x) {
+void draw_help(WINDOW *work, int max_y, int max_x) {
     mvprintw(2, 5, "--- Aide : Raccourcis Clavier ---");
     //contenu de l'aide
     mvprintw(4, 5, "[F1] : Afficher de l'aide / cacher l'aide");
@@ -122,7 +122,7 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
     }
     if (state->is_help_displayed) {
         //affiche le panneau d'aide 
-        draw_help(max_y, max_x);
+        draw_help(work, max_y, max_x);
     } else if (state->is_search_active) {
         mvprintw(2, 0, "Mode recherche activé (ENTREE pour filtrer | F4 ou 'q' pour quitter)");
         mvprintw(4, 0, "Recherche : %s", state->search_term); // Texte simplifié
@@ -206,31 +206,29 @@ void handle_input(programme_state *state, int key, list_proc *lproc) {
     pid_t target_pid = state->selected_pid;
     int erreur;
 
-    switch (key) {
-        case KEY_F(1):
-            state->is_help_displayed =! state->is_help_displayed;
-            key_name = "F1 (aide)";
-            break;
+    // --- partie 1 : GESTION DE L'AIDE ---
+    if (key == KEY_F(1)) {
+        state->is_help_displayed = !state->is_help_displayed;
+        strncpy(state->last_key_pressed, "F1 (Aide)", 127);
+        return; // On arrête là, l'aide bloque tout
+    }
 
-        case 'q':
-            if (state->is_help_displayed) {
-                state->is_help_displayed = 0;
-            } else if (state->is_search_active) {
-                state->is_search_active = 0; //  ferme juste la recherche
-                state->search_term[0] = '\0'; // réinitialise la recherche
-            } else {
-                state->is_running = 0; // quitte le programme seulement si ni aide ni recherche ne sont actives
-            }
-            key_name = "'q'";
-            break;
+    // --- partie 2 : TOUCHE QUITTER ---
+    if (key == 'q') {
+        if (state->is_help_displayed) state->is_help_displayed = 0;
+        else if (state->is_search_active) {
+            state->is_search_active = 0;
+            state->search_term[0] = '\0';
+        }
+        else state->is_running = 0;
+        return;
+    }
 
-        default: 
-            // si l'aide est affichée, ignorer toutes les autres touches (F2-F8, etc.)
-            if (state->is_help_displayed) {
-                 return;
-            }
+    // --- partie 3 : SI AIDE AFFICHÉE, ON IGNORE LE RESTE ---
+    if (state->is_help_displayed) return;
 
-            if (state->is_search_active) {
+    // --- partie 4 : MODE RECHERCHE ---
+    if (state->is_search_active) {
                 int len = strlen(state->search_term);
                 
                 if (key == '\n' || key == KEY_ENTER) {
@@ -275,81 +273,82 @@ void handle_input(programme_state *state, int key, list_proc *lproc) {
                 }
                 return;
             }
-            
-            // Traitement des autres touches si l'aide n'est PAS affichée
-            switch (key) { 
-                case KEY_F(2): // Onglet Suivant
-                    if (state->server_list != NULL) {
-                    // Si on est en local (NULL), on va au premier serveur
-                        if (state->current_server == NULL) {
-                            state->current_server = state->server_list;
-                        } 
-                        // Sinon on avance si possible
-                        else if (state->current_server->next != NULL) {
-                            state->current_server = state->current_server->next;
-                        }
-                        if (state->current_server) {
-                            snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "Onglet : %s", state->current_server->serv->name);
-                        }
-                    }
-                    break;
-                case KEY_F(3): // Onglet Précédent
-                    if (state->current_server != NULL) {
-                        // Si on est sur le premier maillon, on revient en local
-                        if (state->current_server->prev == NULL) {
-                            state->current_server = NULL;
-                            strcpy(state->last_key_pressed, "Onglet : LOCAL");
-                        } else {
-                            state->current_server = state->current_server->prev;
-                            snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "Onglet : %s", state->current_server->serv->name);
-                        }   
-                    }
-                    break;
-                case KEY_F(4):
-                    state->is_search_active =1;
-                    key_name = "F4 (Recherche)";
-                    state->search_term[0] = '\0';
-                    break;
-                case KEY_F(5):
-                    key_name = "F5 (Pause)";
-                    erreur = send_process_action(target_pid, SIGSTOP, "Pause");
-                    if (erreur == 0) {
-                    // utilise SIGSTOP pour mettre en pause un processus (T)
-                    snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "SUCCES : PID %d mis en pause", target_pid);
-                    } else {
-                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "ERREUR : Echec sur PID %d", target_pid);
-                    }
-                    break;
-                case KEY_F(6):
-                    key_name = "F6 (Arrêt)";
-                    // SIGTERM demande au processus de se terminer proprement
-                    erreur = send_process_action(target_pid, SIGTERM, "Arrêt");
-                    if (erreur == 0) {
-                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"SUCCES : Signal Terminaison envoyé au PID %d", target_pid);
-                    } else {
-                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"ERREUR : Echec signal Arrêt sur PID %d", target_pid);
-                    }
-                    break;
-                case KEY_F(7):
-                    key_name = "F7 (Kill)";
-                    erreur = send_process_action(target_pid, SIGKILL, "Kill");
-                    if (erreur == 0) {
-                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "SUCCES : PID %d tue par SIGKILL", target_pid);
-                    } else {
-                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "ERREUR : Impossible de tuer le PID %d", target_pid);
-                    }
-                    break;
-                case KEY_F(8):
-                    key_name = "F8 (Reprise)";
-                    // utilise SIGCONT pour relancer un processus stoppé (S ou R)
-                    erreur = send_process_action(target_pid, SIGCONT, "Reprise");
-                    if (erreur == 0) {
-                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"SUCCES : PID %d relance", target_pid);
-                    } else {
-                        snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"ERREUR : Echec reprise sur PID %d", target_pid);
-                    }
-                    break;
-                case KEY_RESIZE:        //permet le redimmensionnement du terminal
+
+    // --- partie 5 : ACTIONS PROCESSUS ET ONGLETS (F2 à F8) ---
+    // on arrive ici seulement si aide et recherche sont désactivées
+    switch (key) {
+        case KEY_F(2): // onglet Suivant
+            if (state->allow_remote && state->server_list != NULL) {
+                if (state->current_server == NULL) {
+                    state->current_server = state->server_list;
+                } else if (state->current_server->next != NULL) {
+                    state->current_server = state->current_server->next;
+                }
+                key_name = NULL;
+            }
+            break;
+
+        case KEY_F(3): // onglet Précédent
+            if (state->current_server != NULL) {
+                if (state->current_server->prev == NULL) {
+                    if (state->allow_local) state->current_server = NULL;
+                } else {
+                    state->current_server = state->current_server->prev;
+                }
+                key_name = NULL;
+            }
+            break;
+
+        case KEY_F(4):
+            state->is_search_active = 1;
+            state->search_term[0] = '\0';
+            key_name = "Mode Recherche";
+            break;
+
+        case KEY_F(5):
+            key_name = "F5 (Pause)";
+            erreur = send_process_action(target_pid, SIGSTOP, "Pause");
+            if (erreur == 0) {
+                // utilise SIGSTOP pour mettre en pause un processus (T)
+                snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "SUCCES : PID %d mis en pause", target_pid);
+                } else {
+                    snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "ERREUR : Echec sur PID %d", target_pid);
+                }
+                break;
+        
+        case KEY_F(6):
+            key_name = "F6 (Arrêt)";
+            // SIGTERM demande au processus de se terminer proprement
+            erreur = send_process_action(target_pid, SIGTERM, "Arrêt");
+            if (erreur == 0) {
+                snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"SUCCES : Signal Terminaison envoyé au PID %d", target_pid);
+            } else {
+                snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"ERREUR : Echec signal Arrêt sur PID %d", target_pid);
+            }
+            break;
+        
+        case KEY_F(7):
+            key_name = "F7 (Kill)";
+            erreur = send_process_action(target_pid, SIGKILL, "Kill");
+            if (erreur == 0) {
+                snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "SUCCES : PID %d tue par SIGKILL", target_pid);
+            } else {
+                snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "ERREUR : Impossible de tuer le PID %d", target_pid);
+            }
+            break;
+   
+        case KEY_F(8):
+            key_name = "F8 (Reprise)";
+            // utilise SIGCONT pour relancer un processus stoppé (S ou R)
+            erreur = send_process_action(target_pid, SIGCONT, "Reprise");
+            if (erreur == 0) {
+                snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"SUCCES : PID %d relance", target_pid);
+            } else {
+                snprintf(state->last_key_pressed, sizeof(state->last_key_pressed),"ERREUR : Echec reprise sur PID %d", target_pid);
+            }
+            break;
+
+        case KEY_RESIZE:        //permet le redimmensionnement du terminal
                     key_name = "terminal redimensionne (KEY_RESIZE)";
                     break;
                 case 258:
@@ -363,8 +362,7 @@ void handle_input(programme_state *state, int key, list_proc *lproc) {
                     snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "Code touche : %d", key);
                     key_name = NULL; //pour ne pas écraser le snprintf ci-dessus
                     break;
-            }
-    } // fin du switch 
+            } // fin du switch 
 
     // MISE À JOUR FINALE DU MESSAGE (seulement si on n'a pas déjà un message SUCCES/ERREUR)
     if (key_name != NULL) {
