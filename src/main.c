@@ -197,20 +197,20 @@ int main(int argc, char *argv[]) {
     //partie pour la liste des serveurs 
     int error_serv = 0;
     state.server_list = get_serveur_config(".config", &error_serv);
-
-    // regarde les permissions de navigation
-    // autorise le local si pas d'arguments OU option -a
+    
+    // autorise le local si : pas d'arguments OU option -a
     state.allow_local = (argc == 1 || all == 1);
-    // autorise le distant si option -a OU option -c OU serveur distant precise
-    state.allow_remote = (all == 1 || remote_server != NULL || state.server_list != NULL);
 
-    //on ne commence pas toujours en local
+    // autorise le distant SEULEMENT SI (all est mis OU un serveur est précisé) ET que la liste n'est pas vide.
+    state.allow_remote = (all == 1 || remote_server != NULL) && (state.server_list != NULL);
+
+    // determination de la machine de depart
     if (state.allow_local) {
-        state.current_server = NULL; 
+        state.current_server = NULL; // on commence par la machine locale
     } else if (state.allow_remote && state.server_list != NULL) {
-        state.current_server = state.server_list; 
+        state.current_server = state.server_list; // on commence par le premier serveur distant
     } else {
-        state.current_server = NULL; // securite fallback
+        state.current_server = NULL; // sécurité 
     }
 
     // pre-charge la liste initiale selon la machine choisie
