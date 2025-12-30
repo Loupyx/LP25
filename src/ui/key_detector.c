@@ -277,20 +277,25 @@ void handle_input(programme_state *state, int key, list_proc *lproc) {
     // on arrive ici seulement si aide et recherche sont désactivées
     switch (key) {
         case KEY_F(2): // onglet Suivant
+            // on ne change d'onglet QUE si on est autorisé à aller en distant
             if (state->allow_remote && state->server_list != NULL) {
                 if (state->current_server == NULL) {
                     state->current_server = state->server_list;
                 } else if (state->current_server->next != NULL) {
                     state->current_server = state->current_server->next;
                 }
-                key_name = NULL;
+                // si on a changé, on nettoie le nom de la touche pour l'UI
+                key_name = NULL; 
             }
             break;
 
         case KEY_F(3): // onglet Précédent
             if (state->current_server != NULL) {
                 if (state->current_server->prev == NULL) {
-                    if (state->allow_local) state->current_server = NULL;
+                    // on ne revient en local QUE si allow_local est vrai
+                    if (state->allow_local) {
+                        state->current_server = NULL;
+                    }
                 } else {
                     state->current_server = state->current_server->prev;
                 }
