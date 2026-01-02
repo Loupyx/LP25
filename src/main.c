@@ -126,8 +126,6 @@ int get_arg(int argc, char *argv[]) {
         return 0;
     }
 
-    
-
     // Si l'utilisateur a donné un remote_server, on vérifie s'il a fourni username/password
 
     if (remote_server != NULL) {
@@ -220,6 +218,11 @@ int main(int argc, char *argv[]) {
         if (dirs != NULL) {
             err = get_all_proc(&lproc, NULL, dirs, LOCAL);
             destoy_char(dirs);
+            if (dry_run == 1) {
+                // on teste juste l'accès aux processus locaux
+                state.is_running = 0; // on arrête tout de suite après
+                write_log("Dry-run : accès aux processus locaux réussi.");
+            }
         }
     } else {
         // si on commence en distant, lproc restera vide jusqu'à l'implémentation SSH
