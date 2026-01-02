@@ -11,6 +11,7 @@
 
 #include "./../network/network_SSH.h"
 #include "tool.h"
+#include "network_telnet.h"
 
 int write_log(const char *text, ...) {
     FILE *log = fopen(".log", "a");
@@ -263,8 +264,66 @@ void free_ssh_dir(char **list) {
     free(list);
 }
 //TELNET
-char *get_char_telnet(){
-    return "à faire";
+
+char *get_char_telnet(telnet_state *state, const char *path) {
+    if (!state || !state->telnet || !path) {
+        write_log("get_char_telnet : invalid state or path");
+        return NULL;
+    }
+
+    char command[256];
+    snprintf(command, sizeof(command), "cat %s\n", path);
+
+    telnet_user_data ud;
+    memset(&ud, 0, sizeof(ud));
+    ud.state  = state;
+    ud.buffer = NULL;
+    ud.size   = 0;
+
+    telnet_free(state->telnet);
+    state->telnet = telnet_init(telopts, telnet_event_handler, 0, &ud);
+    if (!state->telnet) {
+        write_log("get_char_telnet : telnet_init");
+        free(ud.buffer);
+        return NULL;
+    }
+
+    // Envoyer la commande
+    telnet_send(state->telnet, command, (unsigned int)strlen(command));
+    // telnet_event_handler avec TELNET_EV_SEND fera le send(socket, ...)
+
+    // Lire la réponse sur le socket et la faire traiter par libtelnet
+    char buf[4096];
+    ssize_t rs;
+    // on lit jusqu'à ce que le serveur ferme ou qu'on décide d'arrêter
+    while ((rs = recv(state->sock, buf, sizeof(buf), 0)) > 0) {
+        telnet_recv(state->telnet, buf, (unsigned int)rs);
+        if (state->rc != 0) {
+            // erreur libtelnet
+            free(ud.buffer);
+            return NULL;
+        }
+
+    }
+
+    if (rs < 0) {
+        // erreur socket
+        write_log("get_char_telnet : recv error");
+        free(ud.buffer);
+        return NULL;
+    }
+
+    if (ud.buffer) {
+        size_t w = 0;
+        for (size_t r = 0; r < ud.size; ++r) {
+            if (ud.buffer[r] != '\r') {
+                ud.buffer[w++] = ud.buffer[r];
+            }
+        }
+        ud.buffer[w] = '\0';
+    }
+
+    return ud.buffer;
 }
 
 //AUTRE

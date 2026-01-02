@@ -2,7 +2,8 @@
 #define PROCESSUS_H
 #include <sys/types.h>
 #include <time.h>
-
+#include <libtelnet.h>
+#include "network_telnet.h"
 #include "./../network/network_SSH.h"
 
 /**
@@ -60,14 +61,15 @@ proc *add_queue_proc(proc *list, proc *p);
  * distance (par exemple via /proc ou des commandes exécutées sur la machine cible).
  *
  * \param lproc     Pointeur vers la tête de liste de processus à remplir.
- * \param state     État de la session SSH à utiliser si la connexion est SSH (peut être NULL sinon).
+ * \param ssh_state     État de la session SSH à utiliser si la connexion est SSH (peut être NULL sinon).
+ * \param t_state     État de la session telnet à utiliser si la connexion est telnet (peut être NULL sinon).
  * \param list_dir  Liste de répertoires des processus.
  * \param connexion Type d’accès utilisé (LOCAL, SSH ou TELNET).
  * \return 0 en cas de succès, une valeur non nulle en cas d’erreur.
  */
-int get_all_proc(proc **lproc, ssh_state *state, char *list_dir[], enum acces_type connexion);
+int get_all_proc(proc **lproc, ssh_state *state, telnet_state *t_state, char *list_dir[], enum acces_type connexion);
 
-int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acces_type connexion);
+int update_l_proc(list_proc *lproc, ssh_state *state, telnet_state *t_state, char *list_dir[], enum acces_type connexion);
 
 /**
  * Affiche les informations d'un processus.

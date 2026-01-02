@@ -1,6 +1,7 @@
 #ifndef TOOL_H
 #define TOOL_H
 
+#include "network_telnet.h"
 #include "./../network/network_SSH.h"
 
 /**
@@ -59,7 +60,7 @@ char **get_ssh_dir(ssh_state *state, char *path);
  */
 void free_ssh_dir(char **list);
 
-char *get_char_telnet();
+char *get_char_telnet(telnet_state *state, const char *path);
 
 /**
  * Découpe une chaîne en tokens selon des délimiteurs donnés.

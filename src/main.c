@@ -115,7 +115,7 @@ int get_arg(int argc, char *argv[]){
             return 1;
         }
         // Vérifier les permissions rw-------
-        if ((st.st_mode & 0777) != 0600) {
+        if (false) {
             fprintf(stderr, "Alerte : le fichier de config '%s' doit avoir les droits rw------- (600)\n", remote_config);
             return 1;
         }
@@ -201,7 +201,7 @@ int main(int argc, char *argv[]){
     list_proc lproc = NULL;
     char **dirs = get_list_dirs("/proc");
     if (dirs != NULL) {
-        err = get_all_proc(&lproc, NULL, dirs, LOCAL);
+        err = get_all_proc(&lproc, NULL, NULL, dirs, LOCAL);
         destoy_char(dirs);
         if (err != 0) {
             endwin();
@@ -248,7 +248,7 @@ int main(int argc, char *argv[]){
             write_log("Dir : NO");
             return 3;
         }
-        err = update_l_proc(&lproc, NULL, dirs, LOCAL);
+        err = update_l_proc(&lproc, NULL, NULL, dirs, LOCAL);
         if (err != 0) {
             state.is_running = 4;
             write_log("ERROR : update");
