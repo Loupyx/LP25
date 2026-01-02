@@ -40,7 +40,7 @@ struct option long_options[] = {
 
 int get_arg(int argc, char *argv[]) {
 
-    while ((opt = getopt_long(argc, argv, "hc:t:P:l:s:u:p:a", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hc::t:P:l:s:u:p:a", long_options, NULL)) != -1) {
         switch (opt) {
             case 'h':
                 printf("\nMode d'emploi du programme :\n");
@@ -59,6 +59,28 @@ int get_arg(int argc, char *argv[]) {
 
             case 'c':
                 remote_config = optarg;
+                // Gestion du fichier de configuration distant
+                if (remote_config == NULL) {
+                    remote_config = ".config"; // nom par défaut
+                }
+                // Vérification que le fichier existe
+                struct stat st;
+                if (stat(remote_config, &st) == 0) {
+                    // Vérifier que le fichier est caché (nom commence par .)
+                    if (remote_config[0] != '.') {
+                        fprintf(stderr, "Alerte : le fichier de config '%s' doit être caché (commencer par '.')\n", remote_config);
+                        return 1;
+                    }
+                    // Vérifier les permissions rw-------
+                    if ((st.st_mode & 0777) != 0600) {
+                        fprintf(stderr, "Alerte : le fichier de config '%s' doit avoir les droits rw------- (600)\n", remote_config);
+                        return 1;
+                    }
+                } else {
+                    fprintf(stderr, "Le fichier de config '%s' n'existe pas.\n", remote_config);
+                    return 1;
+                }
+
                 break;
 
             case 't':
@@ -96,28 +118,6 @@ int get_arg(int argc, char *argv[]) {
                 fprintf(stderr, "Option inconnue ! Utilise -h ou --help pour voir comment ça fonctionne !!.\n");
                 return 1;
         }
-    }
-
-    // Gestion du fichier de configuration distant
-    if (remote_config == NULL) {
-        remote_config = ".config"; // nom par défaut
-    }
-    // Vérification que le fichier existe
-    struct stat st;
-    if (stat(remote_config, &st) == 0) {
-        // Vérifier que le fichier est caché (nom commence par .)
-        if (remote_config[0] != '.') {
-            fprintf(stderr, "Alerte : le fichier de config '%s' doit être caché (commencer par '.')\n", remote_config);
-            return 1;
-        }
-        // Vérifier les permissions rw-------
-        if ((st.st_mode & 0777) != 0600) {
-            fprintf(stderr, "Alerte : le fichier de config '%s' doit avoir les droits rw------- (600)\n", remote_config);
-            return 1;
-        }
-    } else {
-        fprintf(stderr, "Le fichier de config '%s' n'existe pas.\n", remote_config);
-        return 1;
     }
 
     // Si aucune option n'a été donnée, on affiche juste les processus locaux
