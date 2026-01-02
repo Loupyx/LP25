@@ -58,7 +58,7 @@ ssh_state *init_ssh_session(server *serv) {
         return NULL;
     }
 
-    printf("Connexion réussi\n");
+    write_log("Connexion réussi\n");
     return state;
 }
 

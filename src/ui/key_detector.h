@@ -10,9 +10,16 @@
  * last_key_pressed garde en mémoire la dernière touche saisie par l'utilisateur.
  */
 typedef struct {
-    int  is_running;              /**< Indique si le programme est en cours d'exécution (booléen). */
-    char last_key_pressed[128];   /**< Dernière touche (ou séquence) pressée par l'utilisateur. */
-    pid_t selected_pid;
+    int  is_running;              /** Indique si le programme est en cours d'exécution (booléen). */
+    char last_key_pressed[128];   /** Dernière touche (ou séquence) pressée par l'utilisateur. */
+    pid_t selected_pid;           /**doonne le PID selectionné */
+    int is_help_displayed;      /**Indicateur pour afficher le panneau d'aide (1=Oui, 0=Non)*/
+    int is_search_active;       /**indique si le mode recherche est actif (1=oui et 0=non) */
+    char search_term[128];      /** terme de recherche saisie par l'utilisateur*/
+    list_serv server_list;    // La liste chargée depuis le .config
+    maillon *current_server;  // Le serveur actuellement affiché (NULL = Local) 
+    int allow_local;   /** 1 si l'onglet local est autorisé */
+    int allow_remote;  /** 1 si les onglets distants sont autorisés */
 } programme_state;
 
 /**
@@ -26,10 +33,22 @@ typedef struct {
 WINDOW *initialize_ncurses();
 
 /**
+ * Dessine l'interface utilisateur pour la partie recherche des processus
+ *
+ * \param work  Fenêtre ncurses dans laquelle dessiner l'interface.
+ * \param term   Permet de donner une chaine de caracteres pour trouver un processus.
+ * \param lproc        Liste chaînée des processus à afficher.
+ * \param max_y Taille maximal de la fenetre en ordonnée.
+ */
+void draw_search_results(WINDOW *work, list_proc lproc, char *term, int max_y);
+
+/**
  * Dessine l'interface utilisateur dans la fenêtre fournie.
  *
  * \param work  Fenêtre ncurses dans laquelle dessiner l'interface.
  * \param state État courant du programme à refléter dans l'affichage.
+ * \param lproc        Liste chaînée des processus à afficher.
+ * \param selected_proc Processus actuellement sélectionné par l'utilisateur.
  */
 void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *selected_proc);
 
@@ -38,7 +57,15 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
  *
  * \param state État du programme à modifier en fonction des touches pressées.
  */
-void handle_input(programme_state *state, int key);
+void handle_input(programme_state *state, int key, list_proc *lproc);
+
+/**
+ * Permet d'enlever les majuscules pour simplifier la recherche dans F4 
+ *
+ * \param str  chaine de caracteres a analyser afin de verifier si il y a des majuscules
+ * \param term   retourne 1 si terme est contenue dans str sans majuscule
+ */
+int starts_with_case(const char *str, const char *term);
 
 
 #endif

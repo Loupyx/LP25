@@ -103,11 +103,12 @@ char *get_char(char *pid, char *file, enum acces_type connexion, ssh_state *stat
     }
     if (!text) {
         write_log("Cannot get char for : %s", path);
+
     }
     return text;
 }
 
-int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state){
+int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state) {
     char *unformated, **data;
     long utime, stime, ticks_per_sec = sysconf(_SC_CLK_TCK), ttime, dtick;
     double sec, cpu;
@@ -151,7 +152,7 @@ int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state){
     return 0;
 }
 
-proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
+proc *get_info(char *pid, ssh_state *state, enum acces_type connexion) {
     char **data, *unformated;
     proc *new = create_proc();
     if (!new) {
@@ -159,7 +160,7 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
         return NULL;
     }
 
-    unformated = get_char(pid, "stat", connexion, state);
+    unformated = get_char(pid, "stat", connexion, state);       //j'ai modif ici pour masquer les erreurs et donc pas tout casser l'affichage 
     if (!unformated) {
         write_log("return NULL to unformated for : %s", pid);
         return NULL;
@@ -180,12 +181,12 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
     destoy_char(data);
     int error = get_time(pid, new, connexion, state);
 
-    if(error == 1){
+    if (error == 1) {
         write_log("erreur get_time for %d", new->PID);
         return NULL;
     }
-
-    unformated = get_char(pid, "status", connexion, state);
+    
+    unformated = get_char(pid, "status", connexion, state);     //j'ai modif ici pour masquer les erreurs et donc pas tout casser l'affichage 
     if (!unformated) {
         write_log("return NULL to unformated for : %s", pid);
         free(new);
@@ -200,7 +201,7 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
     }
 
     char **temp = data;
-    if(temp && temp[9]){
+    if (temp && temp[9]) {
         int transpho = atoi(temp[9]);
         struct passwd *pw = getpwuid(transpho);
         if (!pw || !pw->pw_name) { 
@@ -218,14 +219,14 @@ proc *get_info(char *pid, ssh_state *state, enum acces_type connexion){
 //implémentation de l'envoi du signal au processus
 int send_process_action(pid_t pid, int action_signal, const char *action_name) {
     if (pid <= 1) {
-        //write_log("erreur action : PID invalide (%d)", pid);
+        write_log("erreur action : PID invalide (%d)", pid);
         return -1;
     }
     if (kill(pid, action_signal) == 0) {
-        //write_log("Succes : action '%s' envoyée au PID %d", action_name, pid );
+        write_log("Succes : action '%s' envoyée au PID %d", action_name, pid );
         return 0;
     } else {
-        //write_log("erreur lors de l'envoie du signal %s au PID %d: %s",action_name, pid, strerror(errno));
+        write_log("erreur lors de l'envoie du signal %s au PID %d: %s",action_name, pid, strerror(errno));
         return -1;
     }
 }
@@ -236,8 +237,10 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
 
     while (list_dir[i]) {
         proc *new = get_info(list_dir[i], state, connexion);
-        new->CPU = 0;
-        list = add_queue_proc(list, new);
+        if (new != NULL) {
+            new->CPU = 0;
+            list = add_queue_proc(list, new);
+        }
         ++i;
     }
     *lproc = list;
@@ -256,7 +259,7 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
             snprintf(pid, sizeof(pid), "%d", temp->PID);
             if (strcmp(list_dir[i], pid) == 0) {
                 find = 1;
-                if(get_time(list_dir[i], temp, connexion, state) != 0){
+                if (get_time(list_dir[i], temp, connexion, state) != 0) {
                     write_log("ERROR : get_time for %s", pid);
                 }
             }
@@ -285,7 +288,7 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
     for (int i = 0; list_dir[i]; i++) {
         int find = 0;
         temp = *lproc;
-        while (temp){
+        while (temp) {
             char pid[32];
             snprintf(pid, sizeof(pid), "%d", temp->PID);
             if (strcmp(list_dir[i], pid) == 0) {
@@ -298,7 +301,7 @@ int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acc
         if (find == 0) {
             char *pid =  list_dir[i];
             proc *new = get_info(pid, state, connexion);
-            if (new != NULL) {
+            if ( new != NULL) {
                 *lproc = add_queue_proc(*lproc, new);
             }
         }
