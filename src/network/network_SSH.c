@@ -193,33 +193,6 @@ char **get_ssh_dir(ssh_state *state, char *path) {
     return res;
 }
 
-int open_dir_ssh(ssh_state *state) {
-    char *path = "/proc";
-
-    state->dir = sftp_opendir(state->sftp, path);
-    if (state->dir == NULL) {
-        write_log("Impossible d'ouvrir le dossier %s: %s", path, ssh_get_error(state->session));
-        destroy_ssh_state(state);
-        return 1;
-    }
-    while ((state->attr = sftp_readdir(state->sftp, state->dir)) != NULL) {//Lire les entrées du dossier
-        printf("- %s\n", state->attr->name);
-        sftp_attributes_free(state->attr);
-    }
-    return 0;
-
-}
-
-int close_dir_ssh(ssh_state *state) {
-    state->rc = sftp_closedir(state->dir);
-    if (state->rc != SSH_OK) {
-        write_log("Erreur sftp_closedir: %s", ssh_get_error(state->sftp));
-        return 1;
-    }
-
-    return 0;
-}
-
 void destroy_ssh_state(ssh_state *s) {
     if (!s) return;
 

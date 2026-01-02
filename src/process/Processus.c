@@ -14,6 +14,7 @@
 #include "./../tool/tool.h"
 #include "./../network/network_main.h"
 #include "./../network/network_SSH.h"
+#include "./../network/network_telnet.h"
 
 #define DT 0.1
 #define SIZE_CHAR 300
@@ -98,6 +99,14 @@ char *get_char(char *pid, char *file, server *serv) {
             text = get_char_file(path);
             break;
         case TELNET:
+            telnet_state *ts = init_telnet_session(serv);
+            if (!ts) {
+                write_log("get_char: failed to init telnet session for %s", serv->name);
+                text = NULL;
+            } else {
+                text = get_char_telnet(ts, path);
+                destroy_telnet_state(ts);
+            }
             break;
         default:
             write_log("Wrong connexion type");

@@ -11,6 +11,7 @@
 
 #include "./../network/network_SSH.h"
 #include "tool.h"
+#include "./../network/network_telnet.h"
 
 int write_log(const char *text, ...) {
     FILE *log = fopen(".log", "a");
