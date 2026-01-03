@@ -77,4 +77,12 @@ void print_list_serv(list_serv l);
  */
 void destroy_server(server *serv);
 
+/**
+ * Ajoute un serveur à la liste de serveur
+ * \param list Liste des serveurs à laquelle ajouter serv
+ * \param serv Pointeur vers la structure Server à ajouter en queue
+ */
+list_serv add_queue(list_serv list, server *serv);
+
+
 #endif

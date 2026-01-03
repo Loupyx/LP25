@@ -183,6 +183,59 @@ int main(int argc, char *argv[]) {
     programme_state state = {.is_running = 1};
     int tout = 200; //dt du refesh
 
+    state.server_list = NULL;
+
+    // --- LISTE DES SERVEURS --- 
+    
+    int error_serv = 0; 
+
+    // on crée le serveur local au cas où on en aurait besoin 
+    server *machine_locale = malloc(sizeof(server)); 
+    if (!machine_locale) { 
+        fprintf(stderr, "Erreur allocation mémoire serveur local\n"); 
+        return 1; 
+    } 
+    machine_locale->name = strdup("MACHINE LOCALE"); 
+    machine_locale->adresse = strdup("127.0.0.1"); 
+    machine_locale->port = 0; 
+    machine_locale->username = NULL; 
+    machine_locale->password = NULL; 
+    machine_locale->connexion_type = strdup("LOCAL"); 
+
+    if (remote_config != NULL) {
+        // CAS -c
+        state.server_list = get_serveur_config(remote_config, &error_serv); 
+        if (error_serv != 0) { 
+            write_log("Erreur lors du chargement du fichier de configuration des serveurs\n"); 
+            state.server_list = NULL; 
+        }
+
+    } else if (all == 1) {
+        // CAS -a
+        //state.server_list = add_queue(NULL, machine_locale); 
+
+        server *machine_distante = malloc(sizeof(server)); 
+        if (!machine_distante) { 
+            fprintf(stderr, "Erreur allocation mémoire serveur distant\n"); 
+            return 1; 
+        } 
+        machine_distante->name = remote_server ? strdup(remote_server) : NULL; 
+        machine_distante->adresse = remote_server ? strdup(remote_server) : NULL; 
+        machine_distante->port = (port > 0) ? port : -1; 
+        machine_distante->username = username ? strdup(username) : NULL; 
+        machine_distante->password = password ? strdup(password) : NULL; 
+        machine_distante->connexion_type = connexion_type ? strdup(connexion_type) : NULL; 
+
+        state.server_list = add_queue(state.server_list, machine_distante);
+
+        list_proc lproc_distants = NULL;
+
+    } else {
+        // CAS AUCUN ARGUMENT
+        state.server_list = add_queue(NULL, machine_locale); 
+    }
+
+
     // initialisation
     strcpy(state.last_key_pressed, "aucune");
     state.selected_pid = 0;
@@ -192,23 +245,21 @@ int main(int argc, char *argv[]) {
     }
     wtimeout(main_work, tout); //definition du refresh 
     
-    //partie pour la liste des serveurs 
-    int error_serv = 0;
-    state.server_list = get_serveur_config(".config", &error_serv);
-    
     // autorise le local si : pas d'arguments OU option -a
     state.allow_local = (argc == 1 || all == 1);
 
     // autorise le distant SEULEMENT SI (all est mis OU un serveur est précisé) ET que la liste n'est pas vide.
-    state.allow_remote = (all == 1 || remote_server != NULL) && (state.server_list != NULL);
+    state.allow_remote = (all == 1 || remote_server != NULL || remote_config != NULL) && (state.server_list != NULL);
 
     // determination de la machine de depart
-    if (state.allow_local) {
-        state.current_server = NULL; // on commence par la machine locale
+    if (all == 1) {
+        // -a : on commence en LOCAL mais on a une liste mixte
+        state.current_server = NULL;
     } else if (state.allow_remote && state.server_list != NULL) {
-        state.current_server = state.server_list; // on commence par le premier serveur distant
+        // -c ou -s seul → distant direct
+        state.current_server = state.server_list;
     } else {
-        state.current_server = NULL; // sécurité 
+        state.current_server = NULL;
     }
 
     // pre-charge la liste initiale selon la machine choisie
@@ -231,7 +282,6 @@ int main(int argc, char *argv[]) {
     
     proc *selected_proc = lproc;
     
-
     while (state.is_running) {
         int ch = wgetch(main_work); 
         getmaxyx(main_work, max_y, max_x);
@@ -259,21 +309,64 @@ int main(int argc, char *argv[]) {
         }
 
         // MISE À JOUR DES DONNEES (L'ONGLET)
-        char **dirs = NULL;
         if (state.current_server == NULL) {
             // MODE LOCAL
-            dirs = get_list_dirs("/proc");
+            char **dirs = get_list_dirs("/proc");
             if (dirs) {
                 err = update_l_proc(&lproc, NULL, dirs, LOCAL);
                 destoy_char(dirs);
             }
         } else {
-            // MODE DISTANT (SSH)
-            // On ne fait rien pour l'instant car lproc contient encore les infos locales (LOUISE OU SIMON C'EST ICI)
-            // Mais l'interface affichera le nom du serveur grâce à handle_input
-            snprintf(state.last_key_pressed, sizeof(state.last_key_pressed), 
-                     "Visualisation de : %s", state.current_server->serv->name);
+            // MODE DISTANT (SSH ou TELNET)
+            // On supprime l'ancienne liste
+            while (lproc != NULL) {
+                proc *tmp = lproc;
+                lproc = lproc->next;
+                if (tmp->user) free(tmp->user);
+                if (tmp->cmdline) free(tmp->cmdline);
+                free(tmp);
+            }
+            lproc = NULL;
+
+            if (state.current_server->serv->connexion_type != NULL &&
+                strcmp(state.current_server->serv->connexion_type, "SSH") == 0) {
+                
+                // --- SSH ---
+                ssh_state *ssh_sess = init_ssh_session(state.current_server->serv);
+                /*
+                if (ssh_sess) {
+                    if (open_dir_ssh(ssh_sess) == 0) {
+                        char **dirs = get_list_dirs_ssh(ssh_sess); // faut la faire ?
+                        if (dirs) {
+                            get_all_proc(&lproc, ssh_sess, dirs, SSH);
+                            destoy_char(dirs);
+                        }
+                        close_dir_ssh(ssh_sess);
+                    }
+                    destroy_ssh_state(ssh_sess);
+                }
+                */
+
+            } else if (state.current_server->serv->connexion_type != NULL &&
+                    strcmp(state.current_server->serv->connexion_type, "TELNET") == 0) {
+
+                // --- TELNET ---
+                /*
+                char **dirs = get_list_dirs_telnet(state.current_server->serv); // faut la faire ou pas ?
+                if (dirs) {
+                    get_all_proc(&lproc, NULL, dirs, TELNET);
+                    destoy_char(dirs);
+                }
+            */
+
+            } else {
+                write_log("Type de connexion inconnu pour %s", state.current_server->serv->name);
+            }
+
+            snprintf(state.last_key_pressed, sizeof(state.last_key_pressed),
+                    "Visualisation de : %s", state.current_server->serv->name);
         }
+
 
         // SECURITE DU CURSEUR (Empeche le crash si un processus disparait)
         int found = 0;
