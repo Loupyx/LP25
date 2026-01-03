@@ -189,6 +189,57 @@ int main(int argc, char *argv[]) {
     programme_state state = {.is_running = 1};
     int tout = 200; //dt du refesh
 
+    // --- LISTE DES SERVEURS ---
+
+    int error_serv = 0;
+
+    // on créer le serveur local au cas où on en aurait besoin
+
+    server *machine_locale = malloc(sizeof(server));
+    if (!machine_locale) {
+        fprintf(stderr, "Erreur allocation mémoire serveur local\n");
+        return 1;
+    }
+
+    machine_locale->name = strdup("MACHINE LOCALE");
+    machine_locale->adresse = strdup("127.0.0.1");
+    machine_locale->port = 0;
+    machine_locale->username = NULL;
+    machine_locale->password = NULL;
+    machine_locale->connexion_type = strdup("LOCAL");
+
+    if (remote_config != NULL) { // y a -c
+        state.server_list = get_serveur_config(remote_config, &error_serv);
+        if (error_serv != 0) {
+            write_log("Erreur lors du chargement du fichier de configuration des serveurs\n");
+            state.server_list = NULL;
+        }
+    } 
+    else if (all == 1) { // y a -a
+
+        //state.server_list = add_queue(NULL, machine_locale); // on met la machine locale
+
+        server *machine_distante = malloc(sizeof(server));
+        if (!machine_distante) {
+            fprintf(stderr, "Erreur allocation mémoire serveur distant\n");
+            return 1;
+        }
+
+        machine_distante->name = remote_server ? strdup(remote_server) : NULL;
+        machine_distante->adresse = remote_server ? strdup(remote_server) : NULL;
+        machine_distante->port = (port > 0) ? port : -1;
+        machine_distante->username = username ? strdup(username) : NULL;
+        machine_distante->password = password ? strdup(password) : NULL;
+        machine_distante->connexion_type = connexion_type ? strdup(connexion_type) : NULL;
+
+        state.server_list = add_queue(NULL, machine_distante); // et on ajoute la machine distante
+    } 
+    else { // pas d'arguments
+
+    // state.server_list = add_queue(NULL, machine_locale);
+
+    }
+
     // initialisation
     strcpy(state.last_key_pressed, "aucune");
     state.selected_pid = 0;
@@ -197,10 +248,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     wtimeout(main_work, tout); //definition du refresh 
-
-    //partie pour la liste des serveurs 
-    int error_serv = 0;
-    state.server_list = get_serveur_config(".config", &error_serv);
     
     // autorise le local si : pas d'arguments OU option -a
     state.allow_local = (argc == 1 || all == 1);
@@ -235,9 +282,6 @@ int main(int argc, char *argv[]) {
         // si on commence en distant, lproc restera vide jusqu'à l'implémentation SSH
         write_log("Démarrage sur machine distante : %s", state.current_server->serv->name);
     }
-
-    int window_size = 35; // nombre de processus affichés à l'écran
-
 
     proc *selected_proc = lproc;
     proc *temp = NULL;
@@ -292,12 +336,14 @@ int main(int argc, char *argv[]) {
         write_log("ReadKey : OK");
 
         draw_ui(main_work, &state, lproc, selected_proc);
-        dirs = get_list_dirs("/proc");
-        if (!dirs) {
-            write_log("Dir : NO");
-            return 3;
+
+        char **dirs = get_list_dirs("/proc");
+        if (dirs) {
+            err = update_l_proc(&lproc, NULL, dirs, LOCAL);
+            destoy_char(dirs);
+
         }
-        err = update_l_proc(&lproc, NULL, dirs, LOCAL);
+        
         if (err != 0) {
             state.is_running = 4;
             write_log("ERROR : update");
@@ -307,7 +353,6 @@ int main(int argc, char *argv[]) {
             break;
         }
         write_log("Dir : OK");
-        err = update_l_proc(&lproc, NULL, dirs, LOCAL);
         if (err != 0) {
             state.is_running = 4;
             write_log("ERROR : update");
@@ -341,6 +386,7 @@ int main(int argc, char *argv[]) {
         if (new_dirs) {
             update_l_proc(&lproc, NULL, new_dirs, LOCAL);
             destoy_char(new_dirs);
+            
         }
 
         // --- Securité anti-crash pour que le pointeur ne se retrouve pas dans le vide et donc fait crasher le projet  ---
@@ -359,40 +405,6 @@ int main(int argc, char *argv[]) {
             // si lproc est vide, selected_proc devient NULL (sécurité totale)
             selected_proc = lproc; 
         }
-
-        write_log("ReadKey : OK");
-
-        draw_ui(main_work, &state, lproc, selected_proc);
-        dirs = get_list_dirs("/proc");
-        update_l_proc(&lproc, NULL, dirs, LOCAL);
-        if (!lproc) {
-            state.is_running = 0;
-        if (!dirs) {
-            write_log("Dir : NO");
-            return 3;
-        }
-        write_log("Dir : OK");
-        err = update_l_proc(&lproc, NULL, dirs, LOCAL);
-        if (err != 0) {
-            state.is_running = 4;
-            write_log("ERROR : update");
-        }
-        if (!lproc) {
-            state.is_running = 5;
-            break;
-        }
-        write_log("Update : OK");
-
-        temp = lproc;
-        while (temp && (temp->PID < selected_proc->PID)){
-            temp = temp->next;
-        }
-
-        if (!temp) {
-            state.is_running = 6;
-        } else {
-            selected_proc = temp;
-        }
         wrefresh(main_work);
         write_log("End loop");
     }
@@ -405,6 +417,7 @@ int main(int argc, char *argv[]) {
         if (tmp->user) free(tmp->user);
         if (tmp->cmdline) free(tmp->cmdline);
         free(tmp);
+
     }
 
     if (state.is_running != 0) {
@@ -413,5 +426,4 @@ int main(int argc, char *argv[]) {
 
     write_log("LP25 Fini\n");
     return err;
-}
 }
