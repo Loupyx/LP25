@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "network_main.h"
+#include "./../process/Processus.h"
+#include "./../tool/tool.h"
 
 list_serv add_queue(list_serv list, server *serv) {     
     maillon *new = (maillon*)malloc(sizeof(maillon));
@@ -100,8 +102,13 @@ list_serv get_serveur_config(char *path, int *error) {
                         strcpy(new->password, word);
                         break;
                     case 6:
-                        new->connexion_type = (char*)malloc(size + 1);
-                        strcpy(new->connexion_type, word);
+                        if (strcmp(word, "SSH") == 0) {
+                            new->connexion_type = SSH;
+                        } else if (strcmp(word, "TELNET") == 0) {
+                            new->connexion_type = TELNET;
+                        } else {
+                            new->connexion_type = LOCAL; // valeur par défaut
+                        }
                         break;
                     default:
                         break;
@@ -114,7 +121,7 @@ list_serv get_serveur_config(char *path, int *error) {
 
         if (cpt_word != NB_CHAMP) {
             destroy_server(new);
-            printf("ligne invalide, champs lus = %d\n", cpt_word);
+            write_log("ligne invalide, champs lus = %d\n", cpt_word);
             *error = SERVER_SKIPED;
         } else {
             list = add_queue(list, new);
@@ -130,24 +137,18 @@ list_serv get_serveur_config(char *path, int *error) {
     return list;
 }
 
-void print_error(char mess[]) {
-    printf("%s\n", mess);
-    fflush(stdout);
-}
-
 void print_list_serv(list_serv l) {
     list_serv temp = l;
     int i = 1;
     while (temp != NULL) {
         server *s = temp->serv;
-        printf("Serveur %d:\n", i);
-        printf("  name           : %s\n", s->name);
-        printf("  adresse        : %s\n", s->adresse);
-        printf("  port           : %d\n", s->port);
-        printf("  username       : %s\n", s->username);
-        printf("  password       : %s\n", s->password);
-        printf("  connexion_type : %s\n", s->connexion_type);
-        printf("\n");
+        write_log("Serveur %d:\n", i);
+        write_log("  name           : %s", s->name);
+        write_log("  adresse        : %s", s->adresse);
+        write_log("  port           : %d", s->port);
+        write_log("  username       : %s", s->username);
+        write_log("  password       : %s", s->password);
+        write_log("  connexion_type : %d", s->connexion_type);
 
         temp = temp->next;
         i++;
@@ -160,7 +161,6 @@ void destroy_server(server *serv) {
         free(serv->adresse);
         free(serv->username);
         free(serv->password);
-        free(serv->connexion_type);
     }
     free(serv);
 }

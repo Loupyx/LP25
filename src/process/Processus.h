@@ -3,7 +3,7 @@
 #include <sys/types.h>
 #include <time.h>
 
-#include "./../network/network_SSH.h"
+#include "./../network/network_main.h"
 
 /**
  * Types d'accès possibles à une machine distante ou locale.
@@ -64,9 +64,9 @@ proc *add_queue_proc(proc *list, proc *p);
  * \param connexion Type d’accès utilisé (LOCAL, SSH ou TELNET).
  * \return 0 en cas de succès, une valeur non nulle en cas d’erreur.
  */
-int get_all_proc(proc **lproc, ssh_state *state, enum acces_type connexion);
+int get_all_proc(proc **lproc, server *serv);
 
-int update_l_proc(list_proc *lproc, ssh_state *state, enum acces_type connexion);
+int update_l_proc(list_proc *lproc, server *serv);
 
 /**
  * Affiche les informations d'un processus.

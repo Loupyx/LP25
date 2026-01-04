@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include "ui/key_detector.h"
 #include "network/network_SSH.h"
+#include "network/network_main.h"
 #include "process/Processus.h"
 #include "tool/tool.h"
 
@@ -211,10 +212,32 @@ int main(int argc, char *argv[]) {
         state.current_server = NULL; // sécurité 
     }
 
+    
+    //CECI EST TEMPORAIRE POUR TESTER EN LOCAL SEULEMENT
+    server *local = malloc(sizeof(server));
+    if (!local) {
+        write_log("Erreur d'allocation mémoire pour le serveur local");
+        endwin();
+        return 1;;
+    }
+    local->connexion_type = LOCAL;
+    local->name = "localeuuuuuuuuuuuuuuuuuuuuuux";
+    local->ssh = NULL;
+    local->adresse = "localhost";
+    local->port = 0;
+    local->username = NULL;
+    local->password = NULL;
+
+    state.server_list = add_queue(NULL, local);
+    state.current_server = state.server_list; // on commence par le local
+    
+    write_log("Machine de départ : %s", (state.current_server == NULL) ? "Locale" : state.current_server->serv->name);
+    //FIN PARTIE TEMPORAIRE
+
     // pre-charge la liste initiale selon la machine choisie
     list_proc lproc = NULL;
-    if (state.current_server == NULL) {
-        err = get_all_proc(&lproc, NULL, LOCAL);
+    if (state.current_server) {
+        err = get_all_proc(&lproc, state.current_server->serv);
         if (dry_run == 1) {
             // on teste juste l'accès aux processus locaux
             state.is_running = 0; // on arrête tout de suite après
@@ -228,7 +251,7 @@ int main(int argc, char *argv[]) {
     
     proc *selected_proc = lproc;
     
-
+    write_log("Début de la boucle principale");
     while (state.is_running) {
         int ch = wgetch(main_work); 
         getmaxyx(main_work, max_y, max_x);
@@ -253,12 +276,13 @@ int main(int argc, char *argv[]) {
             else if (ch == KEY_DOWN && selected_proc && selected_proc->next) {
                 selected_proc = selected_proc->next;
             }
+
+            //FAIRE F2 ET F3 POUR CHANGER D'ONGLET ICI COMME UP AND DOWN
         }
 
         // MISE À JOUR DES DONNEES (L'ONGLET)
-        char **dirs = NULL;
-        if (state.current_server == NULL) {
-            err = update_l_proc(&lproc, NULL, LOCAL);
+        if (state.current_server) {
+            err = update_l_proc(&lproc, state.current_server->serv);
         } else {
             // MODE DISTANT (SSH)
             // On ne fait rien pour l'instant car lproc contient encore les infos locales (LOUISE OU SIMON C'EST ICI)

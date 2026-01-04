@@ -4,6 +4,23 @@
 #define CHAR_SIZE 256
 #define NB_CHAMP 6
 
+#include <libssh/libssh.h>
+#include <libssh/sftp.h>
+
+/**
+ * Représente l'état d'une session SSH/SFTP.
+ *
+ * Contient les objets nécessaires pour gérer une connexion SSH et SFTP
+ * associée mais aussi le code de retour des opérations.
+ */
+typedef struct {
+    ssh_session     session;  /**< Session SSH associée au serveur. */
+    sftp_session    sftp;     /**< Session SFTP associée à la session SSH. */
+    sftp_dir        dir;      /**< Répertoire SFTP courant ouvert. */
+    sftp_attributes attr;     /**< Attributs du fichier ou répertoire courant. */
+    int             rc;       /**< Code de retour des dernières opérations. */
+} ssh_state;
+
 /**
  * Codes d'erreurs possibles lors du parsing de la configuration serveur.
  */
@@ -24,7 +41,9 @@ typedef struct {
     int   port;            /**< Port utilisé pour la connexion. */
     char *username;        /**< Nom d'utilisateur pour l'authentification. */
     char *password;        /**< Mot de passe pour l'authentification. */
-    char *connexion_type;  /**< Type de connexion (par ex. TCP, UDP, SSH...). */
+    int connexion_type;  /**< Type de connexion (par ex. TELNET SSH...). */
+    ssh_state *ssh;      /**< État de connexion SSH, si applicable. */
+
 } server;
 
 /**
@@ -46,6 +65,8 @@ typedef struct maillon_s {
  * ou NULL si la liste est vide.
  */
 typedef maillon *list_serv;
+
+list_serv add_queue(list_serv list, server *serv);
 
 /**
  * Lit un fichier de configuration et construit la liste de serveurs.
