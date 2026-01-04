@@ -1,22 +1,6 @@
 #ifndef NETWORK_SSH_H
 #define NETWORK_SSH_H
-#include <libssh/libssh.h>
-#include <libssh/sftp.h>
 #include "network_main.h"
-
-/**
- * Représente l'état d'une session SSH/SFTP.
- *
- * Contient les objets nécessaires pour gérer une connexion SSH et SFTP
- * associée mais aussi le code de retour des opérations.
- */
-typedef struct {
-    ssh_session     session;  /**< Session SSH associée au serveur. */
-    sftp_session    sftp;     /**< Session SFTP associée à la session SSH. */
-    sftp_dir        dir;      /**< Répertoire SFTP courant ouvert. */
-    sftp_attributes attr;     /**< Attributs du fichier ou répertoire courant. */
-    int             rc;       /**< Code de retour des dernières opérations. */
-} ssh_state;
 
 /**
  * Initialise une session SSH/SFTP pour un serveur donné.
