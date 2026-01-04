@@ -214,16 +214,13 @@ int main(int argc, char *argv[]) {
     // pre-charge la liste initiale selon la machine choisie
     list_proc lproc = NULL;
     if (state.current_server == NULL) {
-        char **dirs = get_list_dirs("/proc");
-        if (dirs != NULL) {
-            err = get_all_proc(&lproc, NULL, dirs, LOCAL);
-            destoy_char(dirs);
-            if (dry_run == 1) {
-                // on teste juste l'accès aux processus locaux
-                state.is_running = 0; // on arrête tout de suite après
-                write_log("Dry-run : accès aux processus locaux réussi.");
-            }
+        err = get_all_proc(&lproc, NULL, LOCAL);
+        if (dry_run == 1) {
+            // on teste juste l'accès aux processus locaux
+            state.is_running = 0; // on arrête tout de suite après
+            write_log("Dry-run : accès aux processus locaux réussi.");
         }
+        
     } else {
         // si on commence en distant, lproc restera vide jusqu'à l'implémentation SSH
         write_log("Démarrage sur machine distante : %s", state.current_server->serv->name);
@@ -261,12 +258,7 @@ int main(int argc, char *argv[]) {
         // MISE À JOUR DES DONNEES (L'ONGLET)
         char **dirs = NULL;
         if (state.current_server == NULL) {
-            // MODE LOCAL
-            dirs = get_list_dirs("/proc");
-            if (dirs) {
-                err = update_l_proc(&lproc, NULL, dirs, LOCAL);
-                destoy_char(dirs);
-            }
+            err = update_l_proc(&lproc, NULL, LOCAL);
         } else {
             // MODE DISTANT (SSH)
             // On ne fait rien pour l'instant car lproc contient encore les infos locales (LOUISE OU SIMON C'EST ICI)

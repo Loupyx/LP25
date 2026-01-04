@@ -116,14 +116,15 @@ int get_time(char *pid, proc *p, enum acces_type connexion, ssh_state *state) {
     time_t dt, n_update_time;
 
     unformated = get_char(pid, "stat", connexion, state);
-    if (!unformated)
+    if (!unformated) {
         return 1;
+    }
 
     data = split(unformated, ' ');
     free(unformated);
-    if (!data || !data[0])
+    if (!data || !data[0]) {
         return 1;
-
+    }
     utime = atol(data[14]);
     stime = atol(data[15]);
     ttime = utime + stime;
@@ -231,12 +232,35 @@ int send_process_action(pid_t pid, int action_signal, const char *action_name) {
     }
 }
 
-int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acces_type connexion) {
+int get_all_proc(list_proc *lproc, ssh_state *state, enum acces_type connexion) {
     int i = 0;
     proc *list = NULL;
+    char **dir;
 
-    while (list_dir[i]) {
-        proc *new = get_info(list_dir[i], state, connexion);
+    switch (connexion) {
+        case SSH:
+            if (state == NULL) {
+                write_log("SSH_STATE NULL in get_all_proc");
+                return -1;
+            }
+            break;
+        case LOCAL:
+            dir = get_list_dirs("/proc");
+            if (!dir) {
+                write_log("get_list_dirs returned NULL in get_all_proc");
+                return -1;
+            }
+            break;
+        case TELNET:
+            break;
+        default:
+            write_log("Wrong connexion type");
+            return -1;
+            break;
+    }
+
+    while (dir[i]) {
+        proc *new = get_info(dir[i], state, connexion);
         if (new != NULL) {
             new->CPU = 0;
             list = add_queue_proc(list, new);
@@ -247,10 +271,30 @@ int get_all_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acce
     return EXIT_SUCCESS;
 }
 
-int update_l_proc(list_proc *lproc, ssh_state *state, char *list_dir[], enum acces_type connexion) {
-    if (!list_dir) {
-        return -1;
+int update_l_proc(list_proc *lproc, ssh_state *state, enum acces_type connexion) {
+    char **list_dir;
+    switch (connexion) {
+        case SSH:
+            if (state == NULL) {
+                write_log("SSH_STATE NULL in get_all_proc");
+                return -1;
+            }
+            break;
+        case LOCAL:
+            list_dir = get_list_dirs("/proc");
+            if (!list_dir) {
+                write_log("get_list_dirs returned NULL in get_all_proc");
+                return -1;
+            }
+            break;
+        case TELNET:
+            break;
+        default:
+            write_log("Wrong connexion type");
+            return -1;
+            break;
     }
+
     proc *temp = *lproc;
     while (temp) {
         int find = 0;
