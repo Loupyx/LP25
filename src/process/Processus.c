@@ -57,7 +57,7 @@ void print_l_proc(list_proc l) {
     }
 }
 
-proc* create_proc() {
+proc *create_proc() {
     //initialisation d'un nouveau processus
     proc *new_proc = (proc*)calloc(1, sizeof(proc));
     if (!new_proc) {
@@ -289,7 +289,11 @@ int get_all_proc(list_proc *lproc, server *serv) {
         }
         ++i;
     }
-    *lproc = list;
+
+    if (lproc) {
+        *lproc = list;
+    } else {}
+    
     return EXIT_SUCCESS;
 }
 
@@ -298,7 +302,7 @@ int update_l_proc(list_proc *lproc, server *serv) {
         write_log("update_l_proc : NULL argument");
         return -1;
     }
-    if (!lproc) {
+    if (lproc == NULL || *lproc == NULL) {
         get_all_proc(lproc, serv);
         return 0;
     }

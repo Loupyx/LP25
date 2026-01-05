@@ -66,7 +66,34 @@ typedef struct maillon_s {
  */
 typedef maillon *list_serv;
 
+/**
+ * Ajoute un serveur à la fin de la liste chaînée de serveurs.
+ *
+ * Insère le serveur donné en queue de liste et renvoie la tête
+ * (éventuellement mise à jour si la liste était vide).
+ *
+ * \param list Tête actuelle de la liste de serveurs (peut être NULL).
+ * \param serv Pointeur vers le serveur à ajouter.
+ * \return Nouvelle tête de la liste de serveurs.
+ */
 list_serv add_queue(list_serv list, server *serv);
+
+/**
+ * Crée et initialise une structure server avec les paramètres fournis.
+ *
+ * Alloue dynamiquement un serveur et renseigne son nom, son adresse,
+ * son port, ses identifiants et le type de connexion.
+ * La structure retournée doit être libérée par l'appelant.
+ *
+ * \param name            Nom logique du serveur.
+ * \param adresse         Adresse du serveur (IP ou nom de domaine).
+ * \param port            Port utilisé pour la connexion.
+ * \param username        Nom d'utilisateur pour l'authentification.
+ * \param password        Mot de passe pour l'authentification.
+ * \param connexion_type  Type de connexion (par exemple "SSH", "LOCAL", "TELNET").
+ * \return Pointeur vers la structure server créée, ou NULL en cas d'erreur.
+ */
+server *create_server(const char *name, const char *adresse, int port, const char *username, const char *password, const char *connexion_type);
 
 /**
  * Lit un fichier de configuration et construit la liste de serveurs.
@@ -76,13 +103,6 @@ list_serv add_queue(list_serv list, server *serv);
  * \return La liste de serveurs lu dans le fichier.
  */
 list_serv get_serveur_config(char *path, int *error);
-
-/**
- * Affiche un message d'erreur formaté sur la sortie appropriée.
- *
- * \param mess Message d'erreur à afficher.
- */
-void print_error(char mess[]);
 
 /**
  * Affiche le contenu d'une liste de serveurs.

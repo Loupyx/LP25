@@ -137,12 +137,97 @@ list_serv get_serveur_config(char *path, int *error) {
     return list;
 }
 
+server *create_server(const char *name, const char *adresse, int port, const char *username, const char *password, const char *connexion_type) {
+
+    if ((!name || !adresse || !username || !password) && strcmp(connexion_type, "local") != 0) {
+        write_log("create_server: paramètres invalides\n");
+        return NULL;
+    }
+
+    server *new = (server*)malloc(sizeof(server));
+    if (!new) {
+        write_log("create_server: échec de l'allocation mémoire\n");
+        return NULL;
+    }
+
+    new->name = (char*)malloc(strlen(name) + 1);
+    if (!new->name) {
+        write_log("create_server: échec de l'allocation mémoire pour le nom\n");
+        free(new);
+        return NULL;
+    }
+    strcpy(new->name, name);
+
+    new->adresse = (char*)malloc(strlen(adresse) + 1);
+    if (!new->adresse) {
+        write_log("create_server: échec de l'allocation mémoire pour l'adresse\n");
+        free(new->name);
+        free(new);
+        return NULL;
+    }
+    strcpy(new->adresse, adresse);
+
+    new->port = port;
+
+    new->username = (char*)malloc(strlen(username) + 1);
+    if (!new->username) {
+        write_log("create_server: échec de l'allocation mémoire pour le nom d'utilisateur\n");
+        free(new->adresse);
+        free(new->name);
+        free(new);
+        return NULL;
+    }
+    strcpy(new->username, username);
+
+    new->password = (char*)malloc(strlen(password) + 1);
+    if (!new->password) {
+        write_log("create_server: échec de l'allocation mémoire pour le mot de passe\n");
+        free(new->username);
+        free(new->adresse);
+        free(new->name);
+        free(new);
+        return NULL;
+    }
+    strcpy(new->password, password);
+
+    if (connexion_type != NULL) {
+        if (strcmp(connexion_type, "ssh") == 0) {
+            new->connexion_type = SSH;
+            if (port == -1) {
+                new->port = 22; // port par défaut SSH
+            }
+        } else if (strcmp(connexion_type, "telnet") == 0) {
+            new->connexion_type = TELNET;
+            if (port == -1) {
+                new->port = 23; // port par défaut TELNET
+            }
+        } else if (strcmp(connexion_type, "local") == 0) {
+            new->connexion_type = LOCAL;
+            new->port = 0; // pas de port pour local
+        } else {
+            write_log("Type de connexion inconnu : %s", connexion_type);
+            free(new->username);
+            free(new->adresse);
+            free(new->name);
+            free(new);
+            return NULL;
+        }
+    }
+    new->ssh = NULL;
+
+    return new;
+}
+
 void print_list_serv(list_serv l) {
     list_serv temp = l;
+    if (!temp) {
+        write_log("Liste de serveurs vide.");
+        return;
+    }
     int i = 1;
     while (temp != NULL) {
         server *s = temp->serv;
-        write_log("Serveur %d:\n", i);
+        write_log("Serveur %d:", i);
         write_log("  name           : %s", s->name);
         write_log("  adresse        : %s", s->adresse);
         write_log("  port           : %d", s->port);

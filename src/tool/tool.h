@@ -102,5 +102,15 @@ void print_str_array(char **tab);
  */
 void destoy_char(char *line[]);
 
+/**
+ * Écrit un message formaté dans le journal d'exécution.
+ *
+ * Utilise une interface de type printf avec arguments variadiques pour
+ * enregistrer des informations (erreurs, actions, traces) dans un log.
+ *
+ * \param text Format de la chaîne (comme pour printf), suivi des paramètres variadiques.
+ * \return 0 en cas de succès, une valeur non nulle en cas d'erreur d'écriture.
+ */
 int write_log(const char *text, ...);
+
 #endif

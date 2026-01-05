@@ -16,10 +16,8 @@ typedef struct {
     int is_help_displayed;      /**Indicateur pour afficher le panneau d'aide (1=Oui, 0=Non)*/
     int is_search_active;       /**indique si le mode recherche est actif (1=oui et 0=non) */
     char search_term[128];      /** terme de recherche saisie par l'utilisateur*/
-    list_serv server_list;    // La liste chargée depuis le .config
-    maillon *current_server;  // Le serveur actuellement affiché (NULL = Local) 
-    int allow_local;   /** 1 si l'onglet local est autorisé */
-    int allow_remote;  /** 1 si les onglets distants sont autorisés */
+    list_serv server_list;    /** La liste chargée de tous les serveurs */
+    maillon *current_server;  /** Le serveur actuellement affiché */
 } programme_state;
 
 /**

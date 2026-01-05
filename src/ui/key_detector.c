@@ -28,7 +28,7 @@ int starts_with_case(const char *str, const char *term) {
 }
 
 /*initilisation de ncurses
-WINDOW* est un pointeur vers la fenetre principale (stdscr)*/
+WINDOW * est un pointeur vers la fenetre principale (stdscr)*/
 
 WINDOW *initialize_ncurses() {
     WINDOW *work = initscr();
@@ -111,15 +111,11 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
     werase(work);   //permet d'effacer la fenetre d'avant 
     mvprintw(0, 0, "--- Interface HTOP projet LP25 ---");
     
-    if (state->current_server == NULL) {
-        attron(A_BOLD); 
-        mvprintw(1, 0, "MACHINE : [ LOCAL ]");
-        attroff(A_BOLD); // On arrête le gras ici
-    } else {
-        attron(A_BOLD);
-        mvprintw(1, 0, "MACHINE : [ %s (%s) ]", state->current_server->serv->name, state->current_server->serv->adresse);
-        attroff(A_BOLD); // On arrête le gras ici aussi
-    }
+   
+    attron(A_BOLD);
+    mvprintw(1, 0, "MACHINE : [ %s (%s) ]", state->current_server->serv->name, state->current_server->serv->adresse);
+    attroff(A_BOLD); // On arrête le gras ici aussi
+    
     if (state->is_help_displayed) {
         //affiche le panneau d'aide 
         draw_help(max_y, max_x);
@@ -276,31 +272,12 @@ void handle_input(programme_state *state, int key, list_proc *lproc) {
     // --- partie 5 : ACTIONS PROCESSUS ET ONGLETS (F2 à F8) ---
     // on arrive ici seulement si aide et recherche sont désactivées
     switch (key) {
-        case KEY_F(2): // onglet Suivant
-            // on ne change d'onglet QUE si on est autorisé à aller en distant
-            if (state->allow_remote && state->server_list != NULL) {
-                if (state->current_server == NULL) {
-                    state->current_server = state->server_list;
-                } else if (state->current_server->next != NULL) {
-                    state->current_server = state->current_server->next;
-                }
-                // si on a changé, on nettoie le nom de la touche pour l'UI
-                key_name = NULL; 
-            }
+        case KEY_F(2):
+            key_name = "F2 (Onglet Suivant)";
             break;
 
-        case KEY_F(3): // onglet Précédent
-            if (state->current_server != NULL) {
-                if (state->current_server->prev == NULL) {
-                    // on ne revient en local QUE si allow_local est vrai
-                    if (state->allow_local) {
-                        state->current_server = NULL;
-                    }
-                } else {
-                    state->current_server = state->current_server->prev;
-                }
-                key_name = NULL;
-            }
+        case KEY_F(3):
+            key_name = "F3 (Onglet Précédent)";
             break;
 
         case KEY_F(4):
