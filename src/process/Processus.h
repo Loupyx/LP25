@@ -9,8 +9,8 @@
  * Types d'accès possibles à une machine distante ou locale.
  */
 enum acces_type{
-    SSH,    /**< Accès via le protocole SSH. */
     LOCAL,  /**< Accès local (sur la machine courante). */
+    SSH,    /**< Accès via le protocole SSH. */
     TELNET, /**< Accès via le protocole Telnet. */
 };
 
@@ -66,6 +66,17 @@ proc *add_queue_proc(proc *list, proc *p);
  */
 int get_all_proc(proc **lproc, server *serv);
 
+/**
+ * Met à jour la liste des processus associée à un serveur donné.
+ *
+ * Récupère à nouveau les processus (localement ou à distance selon la
+ * configuration du serveur) et remplace le contenu de la liste pointée
+ * par lproc par les informations actualisées.
+ *
+ * \param lproc Pointeur vers la tête de liste des processus à mettre à jour.
+ * \param serv  Serveur pour lequel actualiser la liste des processus.
+ * \return 0 en cas de succès, une valeur non nulle en cas d'erreur.
+ */
 int update_l_proc(list_proc *lproc, server *serv);
 
 /**

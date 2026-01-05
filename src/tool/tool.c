@@ -103,7 +103,7 @@ char **get_list_dirs(const char *path) {
                 return NULL;
             }
             strcpy(word, entry->d_name);
-            char **tmp = realloc(names, (nb_dir + 2) * sizeof *names);/* +2 : un pour le nouveau nom, un pour le pointeur NULL final */
+            char **tmp = realloc(names, (nb_dir + 2)*sizeof *names);/*+2 : un pour le nouveau nom, un pour le pointeur NULL final */
             if (!tmp) {
                 free(word);
                 write_log("ERROR : reallocation tmp");
@@ -240,7 +240,7 @@ char **get_ssh_dir(ssh_state *state, char *path) {
         }
     }
 
-    char **tmp = realloc(res, (nb_dir + 1) * sizeof(char *));
+    char **tmp = realloc(res, (nb_dir + 1)*sizeof(char *));
     if (!tmp && nb_dir > 0) {
         // cas très rare, mais on gère proprement
         write_log("get_ssh_dir: final realloc failed");
@@ -296,7 +296,7 @@ char **split(char *line, char delim) {
                 }
                 memcpy(word, line + start, size);
                 word[size] = '\0';
-                char **tmp = realloc(res, (nb_word + 2) * sizeof *res);/* +2 : un pour le nouveau mot, un pour le pointeur NULL final */
+                char **tmp = realloc(res, (nb_word + 2)*sizeof *res);/*+2 : un pour le nouveau mot, un pour le pointeur NULL final */
                 if (!tmp) {
                     destoy_char(tmp);
                     destoy_char(res);

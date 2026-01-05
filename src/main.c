@@ -23,6 +23,7 @@ char *remote_server = NULL;    // nom DNS ou IP de la machine distante
 char *username = NULL;          // nom d'utilisateur pour la connexion à distance
 char *password = NULL;          // mot de passe pour la connexion à distance
 int max_y, max_x;   //taille fenetre 
+int test_mode = 0; //mode test pour les devs
 
 // On définit les options longues, que -h = --help
 struct option long_options[] = {
@@ -36,6 +37,7 @@ struct option long_options[] = {
     {"username", required_argument, 0, 'u'},
     {"password", required_argument, 0, 'p'},
     {"all", no_argument, 0, 'a'},
+    {"test-mode", no_argument, &test_mode, 1},
     {0, 0, 0, 0} // stop
 };
 
@@ -45,10 +47,10 @@ int get_arg(int argc, char *argv[]) {
         switch (opt) {
             case 'h':
                 printf("\nMode d'emploi du programme :\n");
-                printf(" -h, --help               : affiche ce message\n");
-                printf(" --dry-run                : teste l'accès aux processus sans rien afficher\n");
-                printf(" -c, --remote-config FILE : chemin vers le fichier de config des machines distantes\n");
-                printf(" -t, --connexion-type TYPE: type de connexion distante (ssh ou telnet)\n");
+                printf(" -h, --help                : affiche ce message\n");
+                printf(" --dry-run                 : teste l'accès aux processus sans rien afficher\n");
+                printf(" -c, --remote-config FILE  : chemin vers le fichier de config des machines distantes\n");
+                printf(" -t, --connexion-type TYPE : type de connexion distante (ssh ou telnet)\n");
                 printf(" -P, --port PORT           : port à utiliser pour la connexion à distance\n");
                 printf(" -l, --login LOGIN         : win@machine_distante pour la connexion à distance\n");
                 printf(" -s, --remote-server HOST  : nom DNS ou IP de la machine distante\n");
@@ -59,10 +61,11 @@ int get_arg(int argc, char *argv[]) {
                 break;
 
             case 'c':
-                remote_config = optarg;
                 // Gestion du fichier de configuration distant
-                if (remote_config == NULL) {
+                if (optarg == NULL) {
                     remote_config = ".config"; // nom par défaut
+                } else {
+                    remote_config = optarg;
                 }
                 // Vérification que le fichier existe
                 struct stat st;
@@ -138,37 +141,41 @@ int get_arg(int argc, char *argv[]) {
                 username = strdup(buf); // copie la chaîne saisie dans username
             }
         }
-
-        if (password == NULL) { // Demande à l'utilisateur de saisir le mot de passe pour cette machine distante
-            printf("Entrez le mot de passe pour %s : ", remote_server);
-            char buf[128];
-            if (fgets(buf, sizeof(buf), stdin)) {
-                buf[strcspn(buf, "\n")] = 0;
-                password = strdup(buf);
-            }
-        }
     }
 
-    // Si l'utilisateur a donné login user@server et pas de password
-    if (login != NULL && password == NULL) {
+    if (login) {
         char *at = strchr(login, '@'); // cherche le caractère '@' dans login
         if (at && username == NULL) {
             *at = 0; // coupe la chaîne à '@'
             username = strdup(login); // username = partie avant '@'
-            login = at + 1;        // login = partie après '@'
+            remote_server = at + 1;        // remote_server = partie après '@'
         }
-        printf("Entrez le mot de passe pour %s@%s : ", username, login);
+
+    }
+
+    // Si l'utilisateur a donné login user@server et pas de password
+    if (remote_server != NULL && password == NULL) {
+        printf("Entrez le mot de passe pour %s@%s : ", username, remote_server);
         char buf[128];
         if (fgets(buf, sizeof(buf), stdin)) {
             buf[strcspn(buf, "\n")] = 0; // supprime le retour à la ligne
             password = strdup(buf); // stocke le mot de passe
         }
     }
+
+    if (remote_server != NULL && connexion_type == NULL) {
+        printf("Entrez le mode de connexion (ssh/telnet) : ");
+        char buf[128];
+        if (fgets(buf, sizeof(buf), stdin)) {
+            buf[strcspn(buf, "\n")] = 0; // supprime le retour à la ligne
+            connexion_type = strdup(buf); // stocke le type de connexion
+        }
+    }
     return 0;
 }
 
 int main(int argc, char *argv[]) {
-    write_log("--------------------Init new session----------------------");
+    write_log("--------------------Init new session----------------------\nNb args : %d", argc);
     int argument = get_arg(argc, argv);
     int err = 0;
 
@@ -187,69 +194,82 @@ int main(int argc, char *argv[]) {
     // initialisation
     strcpy(state.last_key_pressed, "aucune");
     state.selected_pid = 0;
+    
+    //partie pour la liste des serveurs 
+    int error_serv = 0;
+
+    if (remote_config != NULL) { //création de la liste des serveurs distants avec le fichier de config
+        write_log("Fichier de configuration distant : %s", remote_config);
+        list_serv list = get_serveur_config(remote_config, &error_serv);
+        
+        if (error_serv != 0) {
+            write_log("Erreur lors du chargement de la configuration distante : %d", error_serv);
+            return 1;
+        }
+        state.server_list = list;
+    }
+
+    if (password && remote_server && connexion_type && username) { //création d'un serveur avec les infos passées en ligne de commande
+        server *serv = create_server("Distant_from_args", remote_server, port, username, password, connexion_type);
+        if (!serv) {
+            write_log("Échec de la création du serveur distant.");
+        } else {
+            state.server_list = add_queue(state.server_list, serv);
+            write_log("Ajout du serveur distant depuis les arguments de la ligne de commande.");
+        }
+    } else {
+        if (!password) {
+            write_log("Pas de mot de passe fourni pour la connexion distante.");
+        } else {
+            write_log("Mot de passe : %s", password);
+        }
+        if (!remote_server) {
+            write_log("Pas de serveur distant fourni pour la connexion distante.");
+        } else {
+            write_log("Serveur distant : %s", remote_server);
+        }
+        if (!connexion_type) {
+            write_log("Pas de type de connexion fourni pour la connexion distante.");
+        } else {
+            write_log("Type de connexion : %s", connexion_type);
+        }
+        if (!username) {
+            write_log("Pas de nom d'utilisateur fourni pour la connexion distante.");
+        } else {
+            write_log("Nom d'utilisateur : %s", username);
+        }
+
+    }
+
+    if (all == 1 || argc <= 2) { //on ajoute le local si on a demandé tout ou rien
+        server *local = create_server("Localhost", "localhost", 0, "", "", "local");
+        state.server_list = add_queue(state.server_list, local);
+    }
+    state.current_server = state.server_list;
+
+    if (dry_run == 1) {
+        // on teste juste l'accès aux processus locaux
+        server *local = create_server("Localhost", "localhost", 0, "", "", "local");
+        update_l_proc(NULL, local);
+        write_log("Dry-run : accès aux processus locaux réussi.");
+        printf("Dry-run : accès aux processus locaux réussi.\n");
+        return 0;
+    }
+
+    if (state.current_server == NULL) {
+        write_log("Aucun serveur disponible pour la connexion.");
+        return 1;
+    }
+
+    // pre-charge la liste initiale selon la machine choisie
+    list_proc lproc = NULL;
+    print_list_serv(state.server_list);
+    proc *selected_proc = lproc;
     main_work = initialize_ncurses();
     if (main_work == NULL) {
         return 1;
     }
     wtimeout(main_work, tout); //definition du refresh 
-    
-    //partie pour la liste des serveurs 
-    int error_serv = 0;
-    state.server_list = get_serveur_config(".config", &error_serv);
-    
-    // autorise le local si : pas d'arguments OU option -a
-    state.allow_local = (argc == 1 || all == 1);
-
-    // autorise le distant SEULEMENT SI (all est mis OU un serveur est précisé) ET que la liste n'est pas vide.
-    state.allow_remote = (all == 1 || remote_server != NULL) && (state.server_list != NULL);
-
-    // determination de la machine de depart
-    if (state.allow_local) {
-        state.current_server = NULL; // on commence par la machine locale
-    } else if (state.allow_remote && state.server_list != NULL) {
-        state.current_server = state.server_list; // on commence par le premier serveur distant
-    } else {
-        state.current_server = NULL; // sécurité 
-    }
-
-    
-    //CECI EST TEMPORAIRE POUR TESTER EN LOCAL SEULEMENT
-    server *local = malloc(sizeof(server));
-    if (!local) {
-        write_log("Erreur d'allocation mémoire pour le serveur local");
-        endwin();
-        return 1;;
-    }
-    local->connexion_type = LOCAL;
-    local->name = "localeuuuuuuuuuuuuuuuuuuuuuux";
-    local->ssh = NULL;
-    local->adresse = "localhost";
-    local->port = 0;
-    local->username = NULL;
-    local->password = NULL;
-
-    state.server_list = add_queue(NULL, local);
-    state.current_server = state.server_list; // on commence par le local
-    
-    write_log("Machine de départ : %s", (state.current_server == NULL) ? "Locale" : state.current_server->serv->name);
-    //FIN PARTIE TEMPORAIRE
-
-    // pre-charge la liste initiale selon la machine choisie
-    list_proc lproc = NULL;
-    if (state.current_server) {
-        err = get_all_proc(&lproc, state.current_server->serv);
-        if (dry_run == 1) {
-            // on teste juste l'accès aux processus locaux
-            state.is_running = 0; // on arrête tout de suite après
-            write_log("Dry-run : accès aux processus locaux réussi.");
-        }
-        
-    } else {
-        // si on commence en distant, lproc restera vide jusqu'à l'implémentation SSH
-        write_log("Démarrage sur machine distante : %s", state.current_server->serv->name);
-    }
-    
-    proc *selected_proc = lproc;
     
     write_log("Début de la boucle principale");
     while (state.is_running) {
@@ -272,23 +292,20 @@ int main(int argc, char *argv[]) {
             }
             else if (ch == KEY_UP && selected_proc && selected_proc->prev) {
                 selected_proc = selected_proc->prev;
-            }
-            else if (ch == KEY_DOWN && selected_proc && selected_proc->next) {
+            } else if (ch == KEY_DOWN && selected_proc && selected_proc->next) {
                 selected_proc = selected_proc->next;
+            } else if (ch == KEY_F(2)) {
+                if (state.current_server->next != NULL) {
+                    state.current_server = state.current_server->next;
+                }
+            } else if (ch == KEY_F(3)) {
+                if (state.current_server->prev != NULL) {
+                    state.current_server = state.current_server->prev;
+                }
             }
-
-            //FAIRE F2 ET F3 POUR CHANGER D'ONGLET ICI COMME UP AND DOWN
         }
-
-        // MISE À JOUR DES DONNEES (L'ONGLET)
-        if (state.current_server) {
+        if (test_mode == 0) {
             err = update_l_proc(&lproc, state.current_server->serv);
-        } else {
-            // MODE DISTANT (SSH)
-            // On ne fait rien pour l'instant car lproc contient encore les infos locales (LOUISE OU SIMON C'EST ICI)
-            // Mais l'interface affichera le nom du serveur grâce à handle_input
-            snprintf(state.last_key_pressed, sizeof(state.last_key_pressed), 
-                     "Visualisation de : %s", state.current_server->serv->name);
         }
 
         // SECURITE DU CURSEUR (Empeche le crash si un processus disparait)
