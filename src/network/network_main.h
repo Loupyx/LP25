@@ -6,6 +6,7 @@
 
 #include <libssh/libssh.h>
 #include <libssh/sftp.h>
+#include <libtelnet.h>
 
 /**
  * Représente l'état d'une session SSH/SFTP.
@@ -20,6 +21,15 @@ typedef struct {
     sftp_attributes attr;     /**< Attributs du fichier ou répertoire courant. */
     int             rc;       /**< Code de retour des dernières opérations. */
 } ssh_state;
+
+/**
+ * Représente l'état d'une session Telnet.
+ *
+ * Contient le socket TCP sous-jacent et l'état du protocole Telnet
+ * géré par libtelnet.
+ */
+/* forward declaration : structure définie dans network_telnet.h */
+typedef struct telnet_user_data telnet_user_data;
 
 /**
  * Codes d'erreurs possibles lors du parsing de la configuration serveur.

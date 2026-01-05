@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -O2 -g -O0
-LDLIBS = -lncurses -lssh
+LDLIBS = -lncurses -lssh -ltelnet
 EXEC = projet
 SRC := $(wildcard */*.c */*/*.c)
 OBJ = $(SRC:.c=.o)
