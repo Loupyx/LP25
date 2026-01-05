@@ -33,6 +33,15 @@ enum error_parsing {
 };
 
 /**
+ * Types d'accès possibles à une machine distante ou locale.
+ */
+enum acces_type{
+    LOCAL,  /**< Accès local (sur la machine courante). */
+    SSH,    /**< Accès via le protocole SSH. */
+    TELNET, /**< Accès via le protocole Telnet. */
+};
+
+/**
  * Représente un serveur distant et ses paramètres de connexion.
  */
 typedef struct {

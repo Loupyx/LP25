@@ -51,9 +51,14 @@ void draw_search_results(WINDOW *work, list_proc lproc, char *term, int max_y);
 void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *selected_proc);
 
 /**
- * Gère les entrées clavier de l'utilisateur et met à jour l'état du programme.
+ * Gère une touche saisie par l'utilisateur et met à jour l'état du programme.
  *
- * \param state État du programme à modifier en fonction des touches pressées.
+ * Interprète la touche pressée (navigation, actions sur les processus, quitter, etc.),
+ * met à jour programme_state en conséquence et peut modifier la liste des processus.
+ *
+ * \param state État courant du programme (boucle principale, dernière touche, etc.).
+ * \param key   Code de la touche pressée (valeur retournée par getch par exemple).
+ * \param lproc Pointeur vers la liste de processus, éventuellement modifiée par l'action.
  */
 void handle_input(programme_state *state, int key, list_proc *lproc);
 

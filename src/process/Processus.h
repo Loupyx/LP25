@@ -6,15 +6,6 @@
 #include "./../network/network_main.h"
 
 /**
- * Types d'accès possibles à une machine distante ou locale.
- */
-enum acces_type{
-    LOCAL,  /**< Accès local (sur la machine courante). */
-    SSH,    /**< Accès via le protocole SSH. */
-    TELNET, /**< Accès via le protocole Telnet. */
-};
-
-/**
  * Informations sur un processus système.
  *
  * Contient les identifiants du processus, l'utilisateur associé,
@@ -98,11 +89,56 @@ void print_proc(proc *p);
 void print_l_proc(list_proc l);
 
 /**
- * Affiche l'utilisation CPU de tous les processus de la liste.
+ * Crée et initialise une structure proc vide.
  *
- * \param p Pointeur vers le premier élément de la liste de processus.
+ * Alloue dynamiquement une structure proc, initialise ses champs
+ * (PID, PPID, utilisateur, commande, etc.) avec des valeurs par défaut
+ * et renvoie un pointeur vers cette structure.
+ *
+ * \return Pointeur vers la structure proc créée, ou NULL en cas d'erreur.
  */
-void print_cpu(proc *p);
+proc *create_proc();
+
+/**
+ * Lit le contenu d'un fichier d'information de processus.
+ *
+ * Construit le chemin vers le fichier (par exemple dans /proc/<pid>/file
+ * localement ou via SSH) en utilisant le PID, le nom de fichier et le serveur,
+ * puis renvoie son contenu dans un buffer terminé par '\0'.
+ * La mémoire doit être libérée par l'appelant.
+ *
+ * \param pid   PID du processus sous forme de chaîne.
+ * \param file  Nom du fichier d'information à lire (par exemple "stat", "status").
+ * \param serv  Serveur sur lequel le processus s'exécute.
+ * \return Pointeur vers le buffer contenant le texte lu, ou NULL en cas d'erreur.
+ */
+char *get_char(char *pid, char *file, server *serv);
+
+/**
+ * Récupère et calcule le temps CPU d'un processus.
+ *
+ * Lit les informations nécessaires (par exemple dans /proc/<pid>/stat)
+ * via get_char, extrait le temps d'exécution et le stocke dans la structure proc.
+ *
+ * \param pid  PID du processus sous forme de chaîne.
+ * \param p    Pointeur vers la structure proc à mettre à jour.
+ * \param serv Serveur sur lequel le processus s'exécute.
+ * \return 0 en cas de succès, une valeur non nulle en cas d'erreur.
+ */
+int get_time(char *pid, proc *p, server *serv);
+
+/**
+ * Récupère toutes les informations sur un processus donné.
+ *
+ * À partir du PID et du serveur, lit les différents fichiers d'information
+ * (commande, utilisateur, état, temps CPU, etc.) et remplit une nouvelle
+ * structure proc avec ces données.
+ *
+ * \param pid  PID du processus sous forme de chaîne.
+ * \param serv Serveur sur lequel le processus s'exécute.
+ * \return Pointeur vers la structure proc remplie, ou NULL en cas d'erreur.
+ */
+proc *get_info(char *pid, server *serv);
 
 /**
  * Envoie une action à un processus via un signal.

@@ -27,9 +27,6 @@ int starts_with_case(const char *str, const char *term) {
     return 1;
 }
 
-/*initilisation de ncurses
-WINDOW * est un pointeur vers la fenetre principale (stdscr)*/
-
 WINDOW *initialize_ncurses() {
     WINDOW *work = initscr();
     if (work == NULL) {
@@ -48,7 +45,6 @@ WINDOW *initialize_ncurses() {
 /*dessine le contenu du panneau d'aide*/
 void draw_help(int max_y, int max_x) {
     mvprintw(2, 5, "--- Aide : Raccourcis Clavier ---");
-    //contenu de l'aide
     mvprintw(4, 5, "[F1] : Afficher de l'aide / cacher l'aide");
     mvprintw(5, 5, "[F2] : Onglet suivant (navigaion)");
     mvprintw(6, 5, "[F3] : Onglet précédent (navigaion)");
@@ -58,7 +54,6 @@ void draw_help(int max_y, int max_x) {
     mvprintw(11, 5, "[F7] : Tuer (Kill) le processus sélectionné (SIGKILL)");
     mvprintw(12, 5, "[F8] : Reprendre le processus sélectionné (SIGCONT)");
     mvprintw(13, 5, "[q] : Quitter l'application");
-    //message indiquer en bas 
     mvprintw(max_y -2, (max_x /2 ) - 25, "Appuyer sur F1 ou Q pour revenir à la liste des processus");
 }
 
@@ -194,21 +189,17 @@ void draw_ui(WINDOW *work, programme_state *state, list_proc lproc, proc *select
     wrefresh(work); 
 }
 
-
-/*gere les entrees du clavier et met a jour l'etat avec le parametre state (etat actuel du prog a modif)*/
 void handle_input(programme_state *state, int key, list_proc *lproc) {
     const char *key_name = NULL;
     pid_t target_pid = state->selected_pid;
     int erreur;
 
-    // --- partie 1 : GESTION DE L'AIDE ---
     if (key == KEY_F(1)) {
         state->is_help_displayed = !state->is_help_displayed;
         strncpy(state->last_key_pressed, "F1 (Aide)", 127);
         return; // On arrête là, l'aide bloque tout
     }
 
-    // --- partie 2 : TOUCHE QUITTER ---
     if (key == 'q') {
         if (state->is_help_displayed) state->is_help_displayed = 0;
         else if (state->is_search_active) {
@@ -219,57 +210,53 @@ void handle_input(programme_state *state, int key, list_proc *lproc) {
         return;
     }
 
-    // --- partie 3 : SI AIDE AFFICHÉE, ON IGNORE LE RESTE ---
     if (state->is_help_displayed) return;
 
-    // --- partie 4 : MODE RECHERCHE ---
     if (state->is_search_active) {
-                int len = strlen(state->search_term);
-                
-                if (key == '\n' || key == KEY_ENTER) {
-                    proc *temp = *lproc;
-                    int found_pid = -1;
+        int len = strlen(state->search_term);
+        
+        if (key == '\n' || key == KEY_ENTER) {
+            proc *temp = *lproc;
+            int found_pid = -1;
 
-                    while (temp) {
-                        char pid_str[16];
-                        snprintf(pid_str, sizeof(pid_str), "%d", temp->PID);
-                        char *nom_nettoye = (temp->cmdline && temp->cmdline[0] == '(') ? &temp->cmdline[1] : temp->cmdline;
+            while (temp) {
+                char pid_str[16];
+                snprintf(pid_str, sizeof(pid_str), "%d", temp->PID);
+                char *nom_nettoye = (temp->cmdline && temp->cmdline[0] == '(') ? &temp->cmdline[1] : temp->cmdline;
 
-                        if (starts_with_case(pid_str, state->search_term) || 
-                           (nom_nettoye && starts_with_case(nom_nettoye, state->search_term))) {
-                            found_pid = temp->PID;
-                            break; 
-                        }
-                        temp = temp->next;
-                    }
-
-                    if (found_pid != -1) {
-                        state->selected_pid = found_pid; 
-                        state->is_search_active = 0;     
-                        key_name = "Recherche validée";
-                    } else {
-                        key_name = "ERREUR : Aucun match";
-                    }
-                } 
-                else if (key == KEY_F(4)) {
-                    state->is_search_active = 0;
-                    key_name = "Fin de recherche (F4)";
-                } 
-                else if (key == KEY_BACKSPACE || key == 127 || key == 8) {
-                    if (len > 0) state->search_term[len - 1] = '\0';
-                } 
-                else if (isprint(key) && (len < (int)sizeof(state->search_term) - 1)) {
-                    state->search_term[len] = (char)key;
-                    state->search_term[len + 1] = '\0';
+                if (starts_with_case(pid_str, state->search_term) || (nom_nettoye && starts_with_case(nom_nettoye, state->search_term))) {
+                    found_pid = temp->PID;
+                    break; 
                 }
-                
-                if (key_name) {
-                    strncpy(state->last_key_pressed, key_name, sizeof(state->last_key_pressed) - 1);
-                }
-                return;
+                temp = temp->next;
             }
 
-    // --- partie 5 : ACTIONS PROCESSUS ET ONGLETS (F2 à F8) ---
+            if (found_pid != -1) {
+                state->selected_pid = found_pid; 
+                state->is_search_active = 0;     
+                key_name = "Recherche validée";
+            } else {
+                key_name = "ERREUR : Aucun match";
+            }
+        } 
+        else if (key == KEY_F(4)) {
+            state->is_search_active = 0;
+            key_name = "Fin de recherche (F4)";
+        } 
+        else if (key == KEY_BACKSPACE || key == 127 || key == 8) {
+            if (len > 0) state->search_term[len - 1] = '\0';
+        } 
+        else if (isprint(key) && (len < (int)sizeof(state->search_term) - 1)) {
+            state->search_term[len] = (char)key;
+            state->search_term[len + 1] = '\0';
+        }
+        
+        if (key_name) {
+            strncpy(state->last_key_pressed, key_name, sizeof(state->last_key_pressed) - 1);
+        }
+        return;
+    }
+
     // on arrive ici seulement si aide et recherche sont désactivées
     switch (key) {
         case KEY_F(2):
@@ -292,10 +279,11 @@ void handle_input(programme_state *state, int key, list_proc *lproc) {
             if (erreur == 0) {
                 // utilise SIGSTOP pour mettre en pause un processus (T)
                 snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "SUCCES : PID %d mis en pause", target_pid);
-                } else {
-                    snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "ERREUR : Echec sur PID %d", target_pid);
-                }
-                break;
+            } else {
+                snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "ERREUR : Echec sur PID %d", target_pid);
+            }
+            break;
+
         
         case KEY_F(6):
             key_name = "F6 (Arrêt)";
@@ -330,25 +318,26 @@ void handle_input(programme_state *state, int key, list_proc *lproc) {
             break;
 
         case KEY_RESIZE:        //permet le redimmensionnement du terminal
-                    key_name = "terminal redimensionne (KEY_RESIZE)";
-                    break;
-                case 258:
-                    key_name = "Flèche/pavier bas";
-                    break;
-                case 259:
-                    key_name = "Flèche/pavier haut";
-                    break;
-                default:
-                    // on ne met pas de return ici pour laisser le code du bas s'exécuter
-                    snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "Code touche : %d", key);
-                    key_name = NULL; //pour ne pas écraser le snprintf ci-dessus
-                    break;
-            } // fin du switch 
+            key_name = "terminal redimensionne (KEY_RESIZE)";
+            break;
+
+        case 258:
+            key_name = "Bas";
+            break;
+
+        case 259:
+            key_name = "Haut";
+            break;
+
+        default:
+            snprintf(state->last_key_pressed, sizeof(state->last_key_pressed), "Code touche : %d", key);
+            break;
+    }
 
     // MISE À JOUR FINALE DU MESSAGE (seulement si on n'a pas déjà un message SUCCES/ERREUR)
     if (key_name != NULL) {
         if (!strstr(state->last_key_pressed, "SUCCES") && !strstr(state->last_key_pressed, "ERREUR")) {
-             strncpy(state->last_key_pressed, key_name, sizeof(state->last_key_pressed) - 1);
+            strncpy(state->last_key_pressed, key_name, sizeof(state->last_key_pressed) - 1);
         }
     }
 }

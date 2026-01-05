@@ -43,6 +43,12 @@ struct option long_options[] = {
 
 int get_arg(int argc, char *argv[]) {
 
+    // Si aucune option n'a été donnée, on affiche juste les processus locaux
+    if (argc == 1) {
+        write_log("Pas d'option précisée, on se contente d'afficher les processus locaux.");
+        return 0;
+    }
+
     while ((opt = getopt_long(argc, argv, "hc::t:P:l:s:u:p:a", long_options, NULL)) != -1) {
         switch (opt) {
             case 'h':
@@ -63,7 +69,7 @@ int get_arg(int argc, char *argv[]) {
             case 'c':
                 // Gestion du fichier de configuration distant
                 if (optarg == NULL) {
-                    remote_config = ".config"; // nom par défaut
+                    remote_config = ".config";
                 } else {
                     remote_config = optarg;
                 }
@@ -124,15 +130,7 @@ int get_arg(int argc, char *argv[]) {
         }
     }
 
-    // Si aucune option n'a été donnée, on affiche juste les processus locaux
-    if (argc == 1) {
-        write_log("Pas d'option précisée, on se contente d'afficher les processus locaux.");
-        return 0;
-    }
-
-    // Si l'utilisateur a donné un remote_server, on vérifie s'il a fourni username/password
-
-    if (remote_server != NULL) {
+    if (remote_server != NULL) { // Si l'utilisateur a donné un remote_server, on vérifie s'il a fourni username/password
         if (username == NULL) { // Demande à l'utilisateur de saisir le nom d'utilisateur pour cette machine distante
             printf("Entrez le nom d'utilisateur pour %s : ", remote_server);
             char buf[128];
@@ -148,7 +146,7 @@ int get_arg(int argc, char *argv[]) {
         if (at && username == NULL) {
             *at = 0; // coupe la chaîne à '@'
             username = strdup(login); // username = partie avant '@'
-            remote_server = at + 1;        // remote_server = partie après '@'
+            remote_server = at + 1; // remote_server = partie après '@'
         }
 
     }
@@ -158,17 +156,17 @@ int get_arg(int argc, char *argv[]) {
         printf("Entrez le mot de passe pour %s@%s : ", username, remote_server);
         char buf[128];
         if (fgets(buf, sizeof(buf), stdin)) {
-            buf[strcspn(buf, "\n")] = 0; // supprime le retour à la ligne
-            password = strdup(buf); // stocke le mot de passe
+            buf[strcspn(buf, "\n")] = 0;
+            password = strdup(buf);
         }
     }
 
-    if (remote_server != NULL && connexion_type == NULL) {
+    if (remote_server != NULL && connexion_type == NULL) { // demande le type de connexion si pas donné
         printf("Entrez le mode de connexion (ssh/telnet) : ");
         char buf[128];
         if (fgets(buf, sizeof(buf), stdin)) {
-            buf[strcspn(buf, "\n")] = 0; // supprime le retour à la ligne
-            connexion_type = strdup(buf); // stocke le type de connexion
+            buf[strcspn(buf, "\n")] = 0;
+            connexion_type = strdup(buf);
         }
     }
     return 0;
@@ -186,8 +184,17 @@ int main(int argc, char *argv[]) {
     if (argument == -1) { //pas de probleme mais on execute rien rien
         return 0;
     }
+    
+    if (dry_run == 1) {
+        // on teste juste l'accès aux processus locaux
+        server *local = create_server("Localhost", "localhost", 0, "", "", "local");
+        update_l_proc(NULL, local);
+        write_log("Dry-run : accès aux processus locaux réussi.");
+        printf("Dry-run : accès aux processus locaux réussi.\n");
+        return 0;
+    }
 
-    WINDOW *main_work;
+    WINDOW *window;
     programme_state state = {.is_running = 1};
     int tout = 200; //dt du refesh
 
@@ -245,36 +252,29 @@ int main(int argc, char *argv[]) {
         server *local = create_server("Localhost", "localhost", 0, "", "", "local");
         state.server_list = add_queue(state.server_list, local);
     }
-    state.current_server = state.server_list;
 
-    if (dry_run == 1) {
-        // on teste juste l'accès aux processus locaux
-        server *local = create_server("Localhost", "localhost", 0, "", "", "local");
-        update_l_proc(NULL, local);
-        write_log("Dry-run : accès aux processus locaux réussi.");
-        printf("Dry-run : accès aux processus locaux réussi.\n");
-        return 0;
-    }
+    state.current_server = state.server_list;
 
     if (state.current_server == NULL) {
         write_log("Aucun serveur disponible pour la connexion.");
         return 1;
     }
-
-    // pre-charge la liste initiale selon la machine choisie
-    list_proc lproc = NULL;
+    
     print_list_serv(state.server_list);
-    proc *selected_proc = lproc;
-    main_work = initialize_ncurses();
-    if (main_work == NULL) {
+    
+    window = initialize_ncurses();
+    if (window == NULL) {
         return 1;
     }
-    wtimeout(main_work, tout); //definition du refresh 
+    wtimeout(window, tout); //definition du refresh 
+    
+    list_proc lproc = NULL;
+    proc *selected_proc = NULL;
     
     write_log("Début de la boucle principale");
     while (state.is_running) {
-        int ch = wgetch(main_work); 
-        getmaxyx(main_work, max_y, max_x);
+        int ch = wgetch(window); 
+        getmaxyx(window, max_y, max_x);
 
         // GESTION DES TOUCHES
         if (ch != ERR) {
@@ -322,16 +322,24 @@ int main(int argc, char *argv[]) {
             selected_proc = lproc; 
         }
 
-        draw_ui(main_work, &state, lproc, selected_proc);
+        draw_ui(window, &state, lproc, selected_proc);
     }
 
-    // on nettoie !
     endwin();
+
+    //on free tout ce qui a été alloué
     while (lproc != NULL) {
         proc *tmp = lproc;
         lproc = lproc->next;
         if (tmp->user) free(tmp->user);
         if (tmp->cmdline) free(tmp->cmdline);
+        free(tmp);
+    }
+
+    while (state.server_list != NULL) {
+        maillon *tmp = state.server_list;
+        state.server_list = state.server_list->next;
+        destroy_server(tmp->serv);
         free(tmp);
     }
 

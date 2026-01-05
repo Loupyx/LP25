@@ -242,10 +242,18 @@ void print_list_serv(list_serv l) {
 
 void destroy_server(server *serv) {
     if (serv) {
-        free(serv->name);
-        free(serv->adresse);
-        free(serv->username);
-        free(serv->password);
+        if (serv->name) {
+            free(serv->name);
+        }
+        if (serv->adresse) {
+            free(serv->adresse);
+        }
+        if (serv->username) {   
+            free(serv->username);
+        }
+        if (serv->password) {
+            free(serv->password);
+        }
     }
     free(serv);
 }

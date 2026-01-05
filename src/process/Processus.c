@@ -58,7 +58,6 @@ void print_l_proc(list_proc l) {
 }
 
 proc *create_proc() {
-    //initialisation d'un nouveau processus
     proc *new_proc = (proc*)calloc(1, sizeof(proc));
     if (!new_proc) {
         write_log("ERROR : new_proc");
@@ -99,7 +98,6 @@ char *get_char(char *pid, char *file, server *serv) {
             text = get_char_file(path);
             break;
         case TELNET:
-            text = get_char_telnet();
             break;
         default:
             write_log("Wrong connexion type");
@@ -230,7 +228,6 @@ proc *get_info(char *pid, server *serv) {
     return new;
 }
 
-//implémentation de l'envoi du signal au processus
 int send_process_action(pid_t pid, int action_signal, const char *action_name) {
     if (pid <= 1) {
         write_log("erreur action : PID invalide (%d)", pid);
@@ -341,7 +338,7 @@ int update_l_proc(list_proc *lproc, server *serv) {
     proc *temp = *lproc;
     while (temp) {
         int find = 0;
-        for (int i = 0; list_dir[i]; i++) {
+        for (int i=0; list_dir[i]; i++) {
             char pid[32];
             snprintf(pid, sizeof(pid), "%d", temp->PID);
             if (strcmp(list_dir[i], pid) == 0) {
@@ -349,6 +346,7 @@ int update_l_proc(list_proc *lproc, server *serv) {
                 if (get_time(list_dir[i], temp, serv) != 0) {
                     write_log("ERROR : get_time for %s", pid);
                 }
+                break;
             }
         }
 
@@ -372,7 +370,7 @@ int update_l_proc(list_proc *lproc, server *serv) {
             temp = temp->next;
         }
     }
-    for (int i = 0; list_dir[i]; i++) {
+    for (int i=0; list_dir[i]; i++) {
         int find = 0;
         temp = *lproc;
         while (temp) {
@@ -388,7 +386,7 @@ int update_l_proc(list_proc *lproc, server *serv) {
         if (find == 0) {
             char *pid =  list_dir[i];
             proc *new = get_info(pid, serv);
-            if ( new != NULL) {
+            if (new != NULL) {
                 *lproc = add_queue_proc(*lproc, new);
             }
         }
